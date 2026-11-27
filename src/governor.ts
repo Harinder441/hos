@@ -185,6 +185,8 @@ export interface TurnFacts {
   priority: number;
   pool: string;
   running: number;
+  parent: boolean;
+  reserved: number;
   windows: WindowReadings;
   peak: boolean;
   machine: MachineReading | null;
@@ -216,7 +218,10 @@ export function holdReason(facts: TurnFacts, limits: GovernorLimits): string | n
     if (priority >= BATCH_PRIORITY && facts.peak) return 'batch work is deferred during the weekday peak hours';
   }
   const max = limits.running[facts.pool] ?? 0;
-  if (facts.running >= max) return `all ${max} ${facts.pool.charAt(0).toUpperCase()}${facts.pool.slice(1)} slots are running`;
+  const reserved = parentReserve(facts.reserved, max);
+  if (!(facts.parent && max > 0) && facts.running + reserved >= max) {
+    return `all ${max} ${poolLabel(facts.pool)} slots are running${facts.running < max ? ' or kept for parent chats' : ''}`;
+  }
   const machine = facts.machine;
   if (machine) {
     if (machine.memory === 'critical') return 'memory pressure is critical, so only P0 runs';
@@ -226,6 +231,15 @@ export function holdReason(facts: TurnFacts, limits: GovernorLimits): string | n
     if (battery?.onBattery && battery.percent <= LOW_BATTERY_PCT && priority >= 2) return `the battery is at ${battery.percent}%, so only P0-P1 run`;
   }
   return null;
+}
+
+export function poolLabel(pool: string): string {
+  return `${pool.charAt(0).toUpperCase()}${pool.slice(1)}`;
+}
+
+// At least one slot stays open to children, or a parent could wait forever on children that never start.
+export function parentReserve(parents: number, max: number): number {
+  return Math.min(parents, Math.max(0, max - 1));
 }
 
 export function effectivePriority(priority: number, waitedMs: number): number {

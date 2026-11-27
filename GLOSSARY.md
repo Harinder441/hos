@@ -101,7 +101,7 @@ The deterministic rules that admit, refuse or queue spawns and running chats.
 _Avoid_: scheduler, orchestrator
 
 **Slot**:
-One running chat's place in a pool (one per harness); a chat that wants to start a turn when its pool is full is queued.
+One running chat's place in a pool (one per harness); a chat that wants to start a turn when its pool is full is queued, except a lead or a chat with live children, which runs anyway and keeps a slot while idle so its children queue instead.
 
 **Priority**:
 P0 (the owner) to P4 (batch); it orders the queue and decides which chats still run when the governor throttles.

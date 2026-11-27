@@ -57,3 +57,53 @@ test('a queued chat whose slot freed just before a restart still runs its queued
   await after.until((es) => es.some((e) => e.type === 'message.completed' && e.chatId === worker && e.text === 'brief done'));
   expect(lastState(after.events, worker)).not.toBe('queued');
 });
+
+const slowScript: AgentScript = (input) => [input.includes('slow') ? { afterMs: 60 * 60_000, delta: 'finished' } : { delta: 'ok' }];
+
+async function leadWithSlots(slots: number) {
+  const policyFile = join(await tempDir('hos-policy-'), 'policy.yaml');
+  await writeFile(policyFile, `slots:\n  claude_running: ${slots}\n`);
+  const hos = await startTestDaemon({ policyFile, agentRuntime: new ScriptedAgentRuntime(new FakeClock(), slowScript) });
+  const project = await hos.client.createProject(await tempGitRepo());
+  const stream = collect(hos.client);
+  const lead = await hos.client.createChat((await newTopic(hos.client, project.id, 'lead')).id);
+  await hos.client.sendMessage(lead.id, 'plan');
+  await stream.until((es) => es.some((e) => e.type === 'message.completed' && e.chatId === lead.id));
+  const endpoint = (id: string) => hos.agentRuntime.started.filter((spec) => spec.chatId === id).at(-1)!.bus;
+  const spawn = (intent: string) => callBus(endpoint(lead.id), 'spawn', { role: 'worker', intent, prompt: `slow ${intent}`, client_request_id: intent });
+  return { hos, project, stream, lead, endpoint, spawn };
+}
+
+test('a parent whose children hold every Claude slot still runs a turn a child sends it, and its next child queues instead', async () => {
+  const { hos, project, stream, lead, endpoint, spawn } = await leadWithSlots(6);
+  const children: string[] = [];
+  const replies: string[] = [];
+  for (const intent of ['frontend form', 'database migration', 'payment webhook', 'docs website', 'email templates']) {
+    const { output } = await spawn(intent);
+    replies.push(output);
+    children.push(/chat ([0-9a-f-]{36})/.exec(output)![1]!);
+  }
+  expect(replies[0]).toContain('Claude slots free: 4 of 6.');
+  expect(replies[4]).toContain('Claude slots free: 0 of 6.');
+  const other = await hos.client.createChat((await newTopic(hos.client, project.id, 'other')).id);
+  await hos.client.sendMessage(other.id, 'slow');
+  await stream.until((es) => [...children, other.id].every((id) => lastState(es, id) === 'running'));
+
+  const asked = await callBus(endpoint(children[0]!), 'send', { to: lead.id, text: 'which table?' });
+  expect(asked.output).not.toContain('queued');
+  await stream.until((es) => es.filter((e) => e.type === 'message.completed' && e.chatId === lead.id).length === 2);
+
+  const sixth = await spawn('search index');
+  expect(sixth.output).toContain('It is queued (P2): all 6 Claude slots are running.');
+  expect(lastState(stream.events, lead.id)).not.toBe('queued');
+});
+
+test('an idle parent keeps a Claude slot, so its children queue once only that slot is left', async () => {
+  const { stream, lead, endpoint, spawn } = await leadWithSlots(2);
+  const first = /chat ([0-9a-f-]{36})/.exec((await spawn('frontend form')).output)![1]!;
+  expect((await spawn('database migration')).output).toContain('It is queued (P2): all 2 Claude slots are running or kept for parent chats.');
+
+  await stream.until((es) => lastState(es, first) === 'running');
+  expect((await callBus(endpoint(first), 'send', { to: lead.id, text: 'which table?' })).output).not.toContain('queued');
+  await stream.until((es) => es.filter((e) => e.type === 'message.completed' && e.chatId === lead.id).length === 2);
+});

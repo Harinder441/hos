@@ -118,6 +118,8 @@ import {
   LIVE_STATES,
   loadGovernorLimits,
   loadSpawnLimits,
+  parentReserve,
+  poolLabel,
   PRIORITY_BY_ROLE,
   similarity,
   windowStep,
@@ -1746,7 +1748,8 @@ export class Hos {
     ].join('\n');
     const message: Delivery = options.fromHos ? { text: boot, from: 'hos' } : { text: boot, from: 'chat', fromChatId: parentId };
     const queued = (await this.submit(chat, message, chat.priority)) === 'queued';
-    const wait = queued ? ` It is queued (P${chat.priority}): ${this.holds.get(chat.id) ?? 'waiting for a slot'}.` : '';
+    const pool = this.pool(chat);
+    const wait = `${queued ? ` It is queued (P${chat.priority}): ${this.holds.get(chat.id) ?? 'waiting for a slot'}.` : ''} ${poolLabel(pool)} slots free: ${this.freeSlots(pool)} of ${this.slotLimits()[pool] ?? 0}.`;
     return {
       chatId: chat.id,
       outcome: 'ok',
@@ -2774,15 +2777,30 @@ export class Hos {
     }).length;
   }
 
+  private parentsIn(pool: string): Chat[] {
+    const live = this.store.chatsInState([...LIVE_STATES]);
+    const parentIds = new Set(live.map((c) => c.parentId));
+    return live.filter((c) => (c.profile === 'lead' || parentIds.has(c.id)) && this.pool(c) === pool);
+  }
+
+  private freeSlots(pool: string): number {
+    const max = this.slotLimits()[pool] ?? 0;
+    const waiting = this.parentsIn(pool).filter((c) => !this.isRunning(c)).length;
+    return Math.max(0, max - this.runningIn(pool, '') - parentReserve(waiting, max));
+  }
+
   private holdFor(chat: Chat, priority: number): string | null {
     if (this.killSwitchFor(chat.topicId)) return `the ${this.killSwitchFor(chat.topicId)} kill switch is on`;
     const limits = this.options.governorLimits;
     const pool = this.pool(chat);
+    const parents = this.parentsIn(pool);
     return holdReason(
       {
         priority,
         pool,
         running: this.runningIn(pool, chat.id),
+        parent: parents.some((c) => c.id === chat.id),
+        reserved: parents.filter((c) => c.id !== chat.id && !this.isRunning(c)).length,
         windows: this.windows,
         peak: inPeak(this.clock.now(), limits.peak),
         machine: this.machine,
