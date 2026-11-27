@@ -60,3 +60,29 @@ jobs:
           npm ci --no-audit --no-fund
           npm run build
           node dist/daemon/main.js --version
+          cat /proc/sys/kernel/osrelease
+          printf '%s\n' 'export PATH="$HOME/node-v22.20.0-linux-x64/bin:$PATH"' 'cd ~/hos' 'node dist/daemon/main.js init --adopt ~/brain --name CI --timezone UTC >> /tmp/hos.log 2>&1' 'HOS_BRAIN="$HOME/brain" exec node dist/daemon/main.js >> /tmp/hos.log 2>&1' > ~/start-hos.sh
+      - name: foreground hos in WSL, opened from Windows localhost
+        if: matrix.wsl-version == '2'
+        shell: pwsh
+        run: |
+          Start-Process wsl.exe -ArgumentList '-d','Ubuntu-24.04','--','bash','/root/start-hos.sh' -NoNewWindow
+          $code = '000'
+          foreach ($i in 1..60) { Start-Sleep 2; $code = curl.exe -s -o NUL -w "%{http_code}" http://localhost:4517/; if ($code -ne '000') { break } }
+          "windows localhost:4517 / -> $code"
+          "windows 127.0.0.1:4517 / -> " + (curl.exe -s -o NUL -w "%{http_code}" http://127.0.0.1:4517/)
+          "windows localhost:4517 /api/doctor -> " + (curl.exe -s -o NUL -w "%{http_code}" http://localhost:4517/api/doctor)
+          wsl.exe -d Ubuntu-24.04 -- bash -c 'curl -s -o /dev/null -w "wsl 127.0.0.1:4517 / -> %{http_code}\n" http://127.0.0.1:4517/; tail -n 15 /tmp/hos.log'
+          if ($code -eq '000') { exit 1 }
+      - name: start at login (systemd user unit) as far as root in CI goes
+        if: matrix.wsl-version == '2'
+        continue-on-error: true
+        run: |
+          pkill -f dist/daemon/main.js || true
+          sleep 2
+          export PATH="$HOME/node-v22.20.0-linux-x64/bin:$PATH"
+          cd ~/hos
+          node dist/daemon/main.js keeper install --brain ~/brain; echo "keeper install exit $?"
+          sleep 5
+          node dist/daemon/main.js keeper status; echo "keeper status exit $?"
+          curl -s -o /dev/null -w "after keeper: 127.0.0.1:4517 / -> %{http_code}\n" http://127.0.0.1:4517/ || true

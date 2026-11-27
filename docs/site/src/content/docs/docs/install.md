@@ -36,11 +36,26 @@ package from the npm registry: dependencies come from the pinned lockfile in the
 
 ## Before you start
 
-- macOS or Linux.
+- macOS, Linux, or Windows via WSL2 (see [Windows (WSL2)](#windows-wsl2)).
 - Node 22 or newer, git, and a C/C++ toolchain (Xcode command line tools, or `build-essential`).
 - A Claude account. hos brings the Claude Code binary it runs; you sign it in with your own account.
 - `gh` signed in, if you want the agent to create your private brain repo for you.
 - Optional: tmux (terminals, dev servers), Tailscale or Cloudflare (phone access).
+
+## Windows (WSL2)
+
+hos runs inside a WSL 2 Linux distro, and you open it in your Windows browser. Native Windows is not supported yet.
+
+- Install WSL 2 with a distro such as Ubuntu (`wsl --install` in PowerShell), open the distro, start your agent
+  there and paste the prompt. `wsl -l -v` in PowerShell shows the version; WSL 1 does not work.
+- Everything lives in your Linux home (`~/code/hos`, `~/hos-brain`), not under `/mnt/c`.
+- Start at login uses systemd, which Ubuntu from `wsl --install` has on. When you close the last WSL window,
+  Windows stops the distro after a short idle time and hos stops with it.
+- You open `http://localhost:4517` in your Windows browser and save the passkey there.
+- Phone access from WSL is not covered yet.
+
+WSL2 support is new and has not yet been through a full install on a real Windows machine. If something breaks,
+please [open an issue](https://github.com/Harinder441/hos/issues).
 
 ## The questions it asks
 

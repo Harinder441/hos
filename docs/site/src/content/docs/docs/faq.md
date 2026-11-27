@@ -18,7 +18,10 @@ Code and never handles your credentials. Usage counts against your plan's limits
 No. hos does not use API keys.
 
 **Windows?**
-Not yet. hos runs on macOS and Linux.
+Yes, through WSL2. hos runs inside your WSL Linux distro and you open it in your Windows browser at
+`http://localhost:4517`; the install prompt is the same. Native Windows is not supported yet. WSL2 support is new and
+has not yet been through a full install on a real Windows machine: if something breaks, please
+[open an issue](https://github.com/Harinder441/hos/issues). See [Install](../install/#windows-wsl2).
 
 **Does it phone home?**
 hos sends no usage data anywhere. What leaves your computer is what your agents send, push notifications through

@@ -91,10 +91,10 @@ function claudeRow(machine, options) {
 
 function wslRow(machine, hosRoot, port) {
   if (machine.platform !== 'linux') return null;
-  const kernel = machine.readText('/proc/version') ?? '';
+  const kernel = machine.readText('/proc/sys/kernel/osrelease') ?? '';
   if (!machine.env.WSL_DISTRO_NAME && !/microsoft/i.test(kernel)) return null;
   const distro = machine.env.WSL_DISTRO_NAME ? ` (${machine.env.WSL_DISTRO_NAME})` : '';
-  if (!/WSL2|microsoft-standard/i.test(kernel)) {
+  if (!kernel.includes('WSL')) {
     return row('wsl', 'Windows (WSL)', 'fail', `WSL 1${distro}: hos needs WSL 2`, 'in PowerShell on Windows run wsl --set-version <distro> 2 (wsl -l -v lists your distros), then open the distro again (INSTALL.md, Windows (WSL2))');
   }
   const notes = [];

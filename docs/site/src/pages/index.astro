@@ -45,7 +45,7 @@ const shots = { s1, s2, s3, s4, s5, s7, s8, s9, s10 };
   <div class="ctas">
     <a class="btn go" href="#install">Get started</a>
     <a class="btn" href={docs('what-hos-is')}>Read the docs</a>
-    <div class="install"><span>›</span> <b>paste one prompt</b> into your agent <span class="hide-s">· macOS · Linux</span></div>
+    <div class="install"><span>›</span> <b>paste one prompt</b> into your agent <span class="hide-s">· macOS · Linux · Windows via WSL</span></div>
   </div>
   <div class="shot"><Image src={shots.s1} alt="A lead chat's topic in hos: its reply, a web search waiting on an approval card, the helper's tab, and the task list with T1 done" loading="eager" /></div>
 </div></header>
@@ -138,7 +138,7 @@ const shots = { s1, s2, s3, s4, s5, s7, s8, s9, s10 };
   <p class="lede" style="font-size:17px">Paste this into Claude Code or any agent that runs shell commands. It checks the install file against its hash, tells you what it will change, asks a few questions, and stops for your sign-ins and your passkey. You approve every command.</p>
   <div class="term"><span class="c"># paste into your agent</span>
 Install hos on this computer. Download https://raw.githubusercontent.com/Harinder441/hos/v0.1.0/install/INSTALL.md with curl, check that its SHA-256 is <span class="p">9d25c6eca56f4046070f2b5e8cbd09d8048bf4305e8c85735ab38a634eb80c44</span>, and stop if it is not. Tell me in five lines what it will change, then follow it exactly.</div>
-  <div class="req"><span>macOS or Linux</span><span>Node 22+ and git</span><span>Claude Code, signed in with your own account</span><span>gh, for your private brain repo</span><span>optional: Tailscale or Cloudflare for the phone</span></div>
+  <div class="req"><span>macOS, Linux, or Windows via WSL</span><span>Node 22+ and git</span><span>Claude Code, signed in with your own account</span><span>gh, for your private brain repo</span><span>optional: Tailscale or Cloudflare for the phone</span></div>
   <p class="note">hos never runs sudo, and there is no <code>curl | sh</code>. Usage is billed to your own Claude plan; hos never handles your credentials. <a href={docs('install')}>What it changes, step by step →</a></p>
 </div></section>
 

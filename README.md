@@ -26,7 +26,7 @@ you already use. It reads [`install/INSTALL.md`](install/INSTALL.md) at a pinned
 and stops for the steps only you can do (sign-ins and your passkey). Your brain starts as a copy of
 [hos-brain](https://github.com/Harinder441/hos-brain) and becomes your own private repo.
 
-hos runs on macOS and Linux and needs Node 22, git and a C/C++ toolchain; tmux is optional (terminals, dev servers).
+hos runs on macOS, Linux, and Windows via WSL2, and needs Node 22, git and a C/C++ toolchain; tmux is optional (terminals, dev servers).
 hos never asks for an API key: Claude runs under your own subscription login.
 
 ## Docs

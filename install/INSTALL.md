@@ -28,6 +28,8 @@ Expect to stop for: a GitHub sign-in and a Claude sign-in (only if you are not s
 
 Remove it all later with **Uninstall** at the end.
 
+On Windows, hos runs inside a WSL 2 Linux distro and you open it in your Windows browser; see **Windows (WSL2)**.
+
 ## For the agent: rules for this whole file
 
 1. Follow the steps in order. After each step run its **Check**. If a check fails, stop, show the output and the
@@ -55,10 +57,57 @@ Remove it all later with **Uninstall** at the end.
     literal paths and values (`$CODE`, `$BRAIN`, `$NAME`, `$TZ`, `$TAG` are placeholders), and call hos by its full
     path `"$HOME/.local/bin/hos"` as the blocks do, even after the user's PATH is set.
 
+## Windows (WSL2)
+
+WSL2 support is new and has not yet been through a full install on a real Windows machine. If a step fails here,
+show the user the output and point them at https://github.com/Harinder441/hos/issues.
+
+hos runs on Windows only inside a WSL 2 Linux distro (Ubuntu is the usual one); native Windows is not supported.
+Inside WSL every step below is the Linux step, with these differences:
+
+1. **Run inside WSL.** The agent and every command run in the WSL distro. If `uname -s` prints `MINGW…`, `MSYS…` or
+   `CYGWIN…` (Git Bash and similar), or there is no `uname` (PowerShell, cmd), stop and tell the user: "Open your WSL
+   distro (for example Ubuntu from the Start menu), start your agent there and paste the install prompt again."
+2. **WSL 2, not WSL 1.** It is WSL when `WSL_DISTRO_NAME` is set or `/proc/sys/kernel/osrelease` contains
+   `microsoft` in any case; WSL 2 when that file contains `WSL` (it ends in `-microsoft-standard-WSL2`). The
+   preflight's **Windows (WSL)** row checks this. On WSL 1, stop: the user runs `wsl -l -v` in PowerShell (the
+   VERSION column) and `wsl --set-version <distro> 2`. hos needs WSL 2 for its real Linux kernel (full system call
+   compatibility) and for systemd, which step 8 uses and which WSL 1 does not have.
+3. **Folders in the Linux home.** Keep `CODE` and `BRAIN` in the Linux home (the defaults `~/code` and `~/hos-brain`),
+   never under `/mnt/c` or another Windows drive: Linux tools are faster on the Linux file system, and on `/mnt/c`
+   file permissions come from Windows. The preflight warns when the hos folder is under `/mnt/`.
+4. **Tools.** Install them inside WSL as on Linux (the user runs `sudo apt install build-essential python3 git tmux`;
+   Microsoft's guide installs Node in WSL with nvm, ask before adding it). Windows' own Node or git do not count:
+   `command -v node npm git` must print paths outside `/mnt/`. Timezone (step 1): if `timedatectl` fails, use
+   `readlink /etc/localtime | sed 's#.*/zoneinfo/##'`.
+5. **Sign-ins.** `gh auth login` and `claude auth login` run in the WSL terminal; if no browser opens, the user opens
+   the link they print in the Windows browser.
+6. **Browser (steps 7 and 10).** The user opens `http://localhost:4517` in the Windows browser: WSL 2 forwards ports
+   bound to localhost in WSL to Windows. If that page does not load, try `http://127.0.0.1:4517` (in mirrored
+   networking mode Windows reaches WSL on `127.0.0.1`, and `::1` is not supported).
+7. **Start at login (step 8).** The login item is the systemd user unit, so systemd must run in the distro: check
+   `cat /proc/1/comm` prints `systemd` (Ubuntu installed with `wsl --install` has it on). If not, show the user these
+   two lines for `/etc/wsl.conf` (they edit it with `sudo` in their own terminal), then they run `wsl --shutdown` in
+   PowerShell (needs WSL 0.67.6 or newer, `wsl --version`) and open the distro again:
+
+   ```ini
+   [boot]
+   systemd=true
+   ```
+
+   If systemd stays off, treat `KEEPER` as no and start hos by hand. Tell the user: systemd does not keep WSL running.
+   When no WSL window or process is left, Windows shuts the distro down after an idle timeout and hos stops with it.
+   To keep it running, they can set `instanceIdleTimeout=-1` under `[general]` in `%UserProfile%\.wslconfig` (their
+   edit, then `wsl --shutdown`).
+8. **Phone access (step 9): not covered yet for WSL.** Tailscale says to run it on the Windows host only, not inside
+   WSL 2 as well; whether a Windows-side `tailscale serve` reaches hos in WSL has not been tested. Leave `PHONE` as
+   later and point the user at the Remote access section of https://gethos.vercel.app/docs/security/.
+9. **hos-code (step 4).** Use the `linux` archive.
+
 ## Step 0. Quick check (read only)
 
 ```sh
-uname -s          # Darwin or Linux; anything else: stop, hos does not support it
+uname -s          # Darwin or Linux (Linux inside WSL); MINGW*, MSYS*, CYGWIN* or no uname: see Windows (WSL2); anything else: stop
 git --version     # any 2.x
 node --version    # v22 or newer
 ```
@@ -302,5 +351,7 @@ Undo only what the list from rule 8 says this install created, in this order, ea
 5. `rm -rf ~/.hos` (chats, passkeys, settings). Ask twice; this cannot be undone.
 6. `rm ~/.local/bin/hos-code` if step 4 installed it; `rm -rf "$CODE/hos"`, and `"$CODE/hos-code"` if 4b ran (only
    folders this run created).
-7. The brain: leave it unless the user asks. It is their repo. A private GitHub repo is deleted only by the user
+7. WSL: the paths above are the Linux ones inside the distro. An `/etc/wsl.conf` or `.wslconfig` change made for hos
+   is the user's to undo; they may have other reasons to keep it.
+8. The brain: leave it unless the user asks. It is their repo. A private GitHub repo is deleted only by the user
    (`gh repo delete` needs the `delete_repo` scope; do not request it for them).
