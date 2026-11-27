@@ -10,10 +10,9 @@ shell commands. You see and approve every command it runs.
 
 Paste this into your agent, in any folder:
 
-<!-- TODO-T19: the release job writes the tag and the SHA-256 into this block. -->
 
 ```text wrap
-Install hos on this computer. Download https://raw.githubusercontent.com/Harinder441/hos/v0.1.0/install/INSTALL.md with curl, check that its SHA-256 is <hash>, and stop if it is not. Tell me in five lines what it will change, then follow it exactly.
+Install hos on this computer. Download https://raw.githubusercontent.com/Harinder441/hos/v0.1.0/install/INSTALL.md with curl, check that its SHA-256 is 9d25c6eca56f4046070f2b5e8cbd09d8048bf4305e8c85735ab38a634eb80c44, and stop if it is not. Tell me in five lines what it will change, then follow it exactly.
 ```
 
 The URL points at one release tag, and the hash proves your agent got the same bytes we published. Open the URL in
