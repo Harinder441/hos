@@ -80,6 +80,19 @@ test('the phone opens on Home with Home, Chats and More tabs; Chats opens the dr
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
 
+test('a Needs-you item arriving never moves the phone tabs, so a tap aimed at Chats still opens the drawer @phone', async ({ page }) => {
+  const { chatId } = await newTopic({ title: `phone-needs-${Date.now()}`, repo: tempGitRepo() });
+  const tabs = await openOnPhone(page);
+  const chats = tabs.getByRole('button', { name: 'Chats' });
+  const before = await chats.boundingBox();
+  const client = await api();
+  await client.sendMessage(chatId, 'write notes.txt');
+  await expect(tabs.getByRole('link', { name: /waiting on you/ })).toBeVisible();
+  expect(await chats.boundingBox()).toEqual(before);
+  const approval = (await client.listApprovals()).find((a) => a.chatId === chatId && a.decision === null);
+  await client.decideApproval(approval!.id, 'approve');
+});
+
 test('a crowded new-chat bar wraps on the phone, so Quick and Send stay on screen @phone', async ({ page }) => {
   const profile = join(process.env.HOS_E2E_BRAIN!, 'profiles', 'crowded-phone');
   mkdirSync(profile, { recursive: true });
