@@ -12,7 +12,7 @@ Paste this into your agent, in any folder:
 
 
 ```text wrap
-Install hos on this computer. Download https://raw.githubusercontent.com/Harinder441/hos/v0.1.0/install/INSTALL.md with curl, check that its SHA-256 is 9d25c6eca56f4046070f2b5e8cbd09d8048bf4305e8c85735ab38a634eb80c44, and stop if it is not. Tell me in five lines what it will change, then follow it exactly.
+Install hos on this computer. Download https://raw.githubusercontent.com/Harinder441/hos/v0.1.1/install/INSTALL.md with curl, check that its SHA-256 is fef3d9590b44606774f62206930801148abd75e1e89c761d396138e6b74fefc6, and stop if it is not. Tell me in five lines what it will change, then follow it exactly.
 ```
 
 The URL points at one release tag, and the hash proves your agent got the same bytes we published. Open the URL in
