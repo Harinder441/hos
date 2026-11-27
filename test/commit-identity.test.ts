@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -8,6 +9,7 @@ afterEach(cleanupAll);
 afterEach(() => vi.unstubAllEnvs());
 
 const GUARD = '[hook "identity-guard"]\n\tevent = pre-commit\n\tcommand = /usr/bin/true\n';
+const hasHookList = !/unknown subcommand/.test(spawnSync('git', ['hook', 'list', 'pre-commit'], { encoding: 'utf8' }).stderr);
 
 async function globalConfig(text: string) {
   const file = join(await tempDir(), 'gitconfig');
@@ -43,7 +45,7 @@ test('a personal repo that resolves to the work domain is down, and the row neve
   expect(JSON.stringify(found)).not.toContain('me@work.example');
 });
 
-test('a personal repo on the noreply address warns when the guard hook is missing and is ok once it is installed', async () => {
+test.skipIf(!hasHookList)('a personal repo on the noreply address warns when the guard hook is missing and is ok once it is installed', async () => {
   const brainDir = await brainAs('personal', '1+me@users.noreply.github.com');
   await globalConfig('[hosGit]\n\tworkDomain = work.example\n');
   const { hos, row: missing } = await row(brainDir);
@@ -68,7 +70,7 @@ test('the work domain is read through an include in the global git config', asyn
   expect((await row(await brainAs('personal', 'me@work.example'))).row).toMatchObject({ status: 'down' });
 });
 
-test('a work repo on the work domain is fine', async () => {
+test.skipIf(!hasHookList)('a work repo on the work domain is fine', async () => {
   await globalConfig('[hosGit]\n\tworkDomain = work.example\n' + GUARD);
   expect((await row(await brainAs('work', 'me@work.example'))).row).toMatchObject({ status: 'ok' });
 });

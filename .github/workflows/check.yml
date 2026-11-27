@@ -25,9 +25,9 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             docs/site/package-lock.json
-      - name: tmux and a git with config hooks (the macOS runner has neither)
+      - name: tmux (the macOS runner has none)
         if: runner.os == 'macOS'
-        run: brew install tmux git && git --version && tmux -V
+        run: brew install tmux && tmux -V
       - run: git config --global user.name ci && git config --global user.email ci@hos.local && git config --global init.defaultBranch main
       - run: npm ci
       - name: Type check
