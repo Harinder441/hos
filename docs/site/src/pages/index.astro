@@ -2,7 +2,7 @@
 import '@fontsource-variable/overpass';
 import '@fontsource-variable/overpass-mono';
 import '../styles/landing.css';
-import { Image } from 'astro:assets';
+import { Picture } from 'astro:assets';
 import { REPO } from '../order.mjs';
 import s1 from '../assets/shots/s1-lead.png';
 import s2 from '../assets/shots/s2-team.png';
@@ -18,6 +18,8 @@ const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 const docs = (slug: string) => `${base}docs/${slug}/`;
 const gh = 'https://github.com/Harinder441';
 const shots = { s1, s2, s3, s4, s5, s7, s8, s9, s10 };
+const pic = { formats: ['avif'], fallbackFormat: 'webp' } as const;
+const card = { ...pic, widths: [400, 800], sizes: '(max-width: 820px) calc(100vw - 96px), 330px' };
 ---
 
 <!doctype html>
@@ -47,7 +49,13 @@ const shots = { s1, s2, s3, s4, s5, s7, s8, s9, s10 };
     <a class="btn" href={docs('what-hos-is')}>Read the docs</a>
     <div class="install"><span>›</span> <b>paste one prompt</b> into your agent <span class="hide-s">· macOS · Linux</span></div>
   </div>
-  <div class="shot"><Image src={shots.s1} alt="A lead chat's topic in hos: its reply, a web search waiting on an approval card, the helper's tab, and the task list with T1 done" loading="eager" /></div>
+  <div class="stage">
+    <div class="layer l-left" aria-hidden="true"><Picture src={shots.s2} alt="" {...pic} widths={[640, 1024, 1280]} sizes="520px" /></div>
+    <div class="layer l-back" aria-hidden="true"><Picture src={shots.s3} alt="" {...pic} widths={[640, 1024, 1280]} sizes="520px" /></div>
+    <div class="layer l-right" aria-hidden="true"><Picture src={shots.s8} alt="" {...pic} widths={[640, 1024, 1280]} sizes="520px" /></div>
+    <figure class="front"><div class="bar" aria-hidden="true"><i></i><i></i><i></i></div><Picture src={shots.s1} alt="A complete hos window: the topic list, a lead chat whose web search waits on an approval card above the message box, its helper's tab, and the task list with T1 done" {...pic} widths={[720, 1440, 2160, 2880]} sizes="(max-width: 820px) calc(100vw - 48px), 920px" loading="eager" fetchpriority="high" /></figure>
+    <div class="phone" aria-hidden="true"><Picture src={shots.s7} alt="" {...pic} widths={[240, 400, 780]} sizes="(max-width: 820px) 31vw, 190px" /></div>
+  </div>
 </div></header>
 
 <section id="why"><div class="wrap pain">
@@ -76,15 +84,15 @@ const shots = { s1, s2, s3, s4, s5, s7, s8, s9, s10 };
   <h2>Everything a team of agents needs, on hardware you own.</h2>
   <p class="lede" style="font-size:18px">All of it is in the open-source repo. Amber tags mark what no product in our comparison has as a full feature, as far as our research of 2026-11-26 found.</p>
   <div class="grid">
-    <div class="feat"><span class="tag only">Tasks + locks · only here</span><h3>A lead, roles, tasks and locks</h3><p>A lead chat splits the work into tasks and starts helpers with a role: worker, reviewer, scout. Writers lock the files they own: another chat's edits there are refused, and shell writes are caught right after they run. Chats message each other.</p><div class="mini"><Image src={shots.s2} alt="A helper chat's tab with its edits and test run opened; the task list shows T1 done with its done-when checks" /></div></div>
-    <div class="feat"><span class="tag only">Memory · only here</span><h3>Pick up where they left off</h3><p>Each job gets a work folder with a PROGRESS.md the agents keep true. When a chat runs long, you ask it to hand off to a fresh one with a written handoff instead of a lossy summary. A daily log says what got done.</p><div class="mini"><Image src={shots.s3} alt="A lead chat after a context refresh: it rereads PROGRESS.md, its tasks and roster, then sums up; the side panel shows the files the topic touched" /></div></div>
-    <div class="feat"><span class="tag only">Brain · only here</span><h3>Your setup is a git repo</h3><p>Rules, skills, profiles and memory live in one repo that every chat runs in, whatever repo it is working on. hos commits what agents write there. Start from hos-brain: five profiles and seven skills, plus the hos skill and its recipes, which hos copies in.</p><div class="mini"><Image src={shots.s4} alt="The Profile picker in New chat" /></div></div>
+    <div class="feat"><span class="tag only">Tasks + locks · only here</span><h3>A lead, roles, tasks and locks</h3><p>A lead chat splits the work into tasks and starts helpers with a role: worker, reviewer, scout. Writers lock the files they own: another chat's edits there are refused, and shell writes are caught right after they run. Chats message each other.</p><div class="mini"><Picture {...card} src={shots.s2} alt="A helper chat's tab with its edits and test run opened; the task list shows T1 done with its done-when checks" /></div></div>
+    <div class="feat"><span class="tag only">Memory · only here</span><h3>Pick up where they left off</h3><p>Each job gets a work folder with a PROGRESS.md the agents keep true. When a chat runs long, you ask it to hand off to a fresh one with a written handoff instead of a lossy summary. A daily log says what got done.</p><div class="mini"><Picture {...card} src={shots.s3} alt="A lead chat after a context refresh: it rereads PROGRESS.md, its tasks and roster, then sums up; the side panel shows the files the topic touched" /></div></div>
+    <div class="feat"><span class="tag only">Brain · only here</span><h3>Your setup is a git repo</h3><p>Rules, skills, profiles and memory live in one repo that every chat runs in, whatever repo it is working on. hos commits what agents write there. Start from hos-brain: five profiles and seven skills, plus the hos skill and its recipes, which hos copies in.</p><div class="mini"><Picture {...card} src={shots.s4} alt="The Profile picker in New chat" /></div></div>
     <div class="feat"><span class="tag">Computers</span><h3>Drive your other machines</h3><p>Pair a second machine you own, like a Linux box or a spare Mac, and start chats there from the same screen. One topic list, one inbox, chats that message across machines.</p><div class="mini"><div class="mach"><div><b>this Mac</b>3 chats · 2 slots free</div><div><b>linux-box</b>1 chat · 5 slots free<br>pairing code, 10 min</div></div></div></div>
-    <div class="feat"><span class="tag">Phone</span><h3>Approve from your pocket</h3><p>Install it as an app from Safari or Chrome. Push tells you when an approval, a plan or a question waits; answer in one tap. Diffs stack, terminals get a key bar. Push payloads are encrypted for your device.</p><div class="mini"><Image src={shots.s7} alt="An approval card on the phone" /></div></div>
-    <div class="feat"><span class="tag">Reach it from anywhere</span><h3>Your network, no relay</h3><p>It listens on localhost. Publish it inside your own Tailscale tailnet, or behind your own Cloudflare Tunnel and Access login. No relay of ours sits in the path, and you sign in with a passkey.</p><div class="mini"><Image src={shots.s10} alt="Settings, Phone & remote access" /></div></div>
+    <div class="feat"><span class="tag">Phone</span><h3>Approve from your pocket</h3><p>Install it as an app from Safari or Chrome. Push tells you when an approval, a plan or a question waits; answer in one tap. Diffs stack, terminals get a key bar. Push payloads are encrypted for your device.</p><div class="mini"><Picture {...card} src={shots.s7} alt="An approval card on the phone" /></div></div>
+    <div class="feat"><span class="tag">Reach it from anywhere</span><h3>Your network, no relay</h3><p>It listens on localhost. Publish it inside your own Tailscale tailnet, or behind your own Cloudflare Tunnel and Access login. No relay of ours sits in the path, and you sign in with a passkey.</p><div class="mini"><Picture {...card} src={shots.s10} alt="Settings, Phone & remote access" /></div></div>
     <div class="feat"><span class="tag">Harnesses</span><h3>Bring your coding agent</h3><p>Claude comes built in and runs under your own Claude login. Agents that speak ACP plug in through the generic ACP harness; anything else through the <a href={docs('add-a-harness')}>Add a harness</a> guide.</p><div class="mini pad"><div class="harn"><div><b>Claude</b><span class="ok">built in · signed in</span></div><div><b>Any ACP agent</b><span class="ok">generic ACP harness</span></div><div class="add">+ Add a harness → guide</div></div></div></div>
-    <div class="feat"><span class="tag">Review</span><h3>Read every diff</h3><p>Every changed file opens in the diff view: the worktree against its base, one chat's edits, or one commit. Comment on lines, then send the comments to a chat as its next message. Code view opens the whole repo and its pull requests.</p><div class="mini"><Image src={shots.s8} alt="The diff view with a line comment for the chat" /></div></div>
-    <div class="feat"><span class="tag">Guardrails</span><h3>Limits you set once</h3><p>Every tool call gets a class, from read to push to config change, and your policy says which run and which ask. A governor keeps concurrent chats inside your plan's limits. One switch stops every agent.</p><div class="mini"><Image src={shots.s9} alt="An approval card and the Stop all chats confirm" /></div></div>
+    <div class="feat"><span class="tag">Review</span><h3>Read every diff</h3><p>Every changed file opens in the diff view: the worktree against its base, one chat's edits, or one commit. Comment on lines, then send the comments to a chat as its next message. Code view opens the whole repo and its pull requests.</p><div class="mini"><Picture {...card} src={shots.s8} alt="The diff view with a line comment for the chat" /></div></div>
+    <div class="feat"><span class="tag">Guardrails</span><h3>Limits you set once</h3><p>Every tool call gets a class, from read to push to config change, and your policy says which run and which ask. A governor keeps concurrent chats inside your plan's limits. One switch stops every agent.</p><div class="mini"><Picture {...card} src={shots.s9} alt="An approval card and the Stop all chats confirm" /></div></div>
   </div>
 
   <div class="row">
@@ -94,7 +102,7 @@ const shots = { s1, s2, s3, s4, s5, s7, s8, s9, s10 };
       <p class="lede" style="font-size:17px">Pick a repo and hos makes the worktree, runs your setup script, gives it a stable port and starts its dev server. Terminals live in the app, and you can take over a chat's session when it gets stuck.</p>
       <ul><li>Root, existing worktree, or a new one, from one picker</li><li>Preview links that work from the phone too</li><li>Commit, push and open the PR from the panel</li></ul>
     </div>
-    <div class="shot flat"><Image src={shots.s5} alt="The workspace picker a chat raised: the repo root, an existing worktree and Create a new worktree" /></div>
+    <div class="shot flat"><Picture {...pic} widths={[600, 1200, 1800]} sizes="(max-width: 820px) calc(100vw - 48px), 600px" src={shots.s5} alt="The workspace picker a chat raised: the repo root, an existing worktree and Create a new worktree" /></div>
   </div>
 </div></section>
 

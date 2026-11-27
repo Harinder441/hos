@@ -49,7 +49,7 @@ function stripPng(path: string) {
 
 async function enrol(out: string) {
   const browser = await chromium.launch();
-  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, colorScheme: 'dark' });
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2, colorScheme: 'dark' });
   const page = await context.newPage();
   await page.goto(`${base}/`);
   const box = page.getByLabel('Setup code');
@@ -192,29 +192,30 @@ async function shoot(out: string, only: string[]) {
   const t = (key: string) => s.topics[key]!;
   const helper = chats.find((c) => c.parentId === t('rate').chatId);
   const browser = await chromium.launch();
-  const open = async (phone: boolean) => {
+  const open = async (kind: 'phone' | 'desk' | 'hero') => {
     const context = await browser.newContext(
-      phone
+      kind === 'phone'
         ? { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, colorScheme: 'dark' }
-        : { viewport: { width: 1280, height: 800 }, colorScheme: 'dark' },
+        : { viewport: kind === 'hero' ? { width: 1440, height: 900 } : { width: 1280, height: 800 }, deviceScaleFactor: 2, colorScheme: 'dark' },
     );
     await context.addInitScript((token) => localStorage.setItem('hos.session', token), api.sessionToken!);
     const page = await context.newPage();
     page.on('pageerror', (error) => console.error(`page error: ${error.message}`));
     return page;
   };
-  const desk = await open(false);
-  const phone = await open(true);
+  const desk = await open('desk');
+  const phone = await open('phone');
   const want = (name: string) => !only.length || only.includes(name);
-  const thread = (key: string, chatId?: string) => go(desk, `#/topic/${t(key).topicId}/chat/${chatId ?? t(key).chatId}`);
+  const thread = (key: string, chatId?: string, page = desk) => go(page, `#/topic/${t(key).topicId}/chat/${chatId ?? t(key).chatId}`);
 
   if (want('s1')) {
-    await thread('rate');
-    await desk.getByRole('main').getByRole('group', { name: /^Permission request/ }).waitFor();
-    const tasks = await showPanel(desk, 'Tasks');
+    const hero = await open('hero');
+    await thread('rate', undefined, hero);
+    await hero.getByRole('main').getByRole('group', { name: /^Permission request/ }).waitFor();
+    const tasks = await showPanel(hero, 'Tasks');
     await tasks.getByText(/^Done \d/).first().click();
     await sleep(300);
-    await docShot(desk, out, 's1-lead');
+    await docShot(hero, out, 's1-lead');
   }
   if (want('s2') && helper) {
     await thread('rate', helper.id);
@@ -248,8 +249,9 @@ async function shoot(out: string, only: string[]) {
     await desk.getByRole('region', { name: 'Pick a notes-api workspace' }).getByRole('radio').first().waitFor();
     await docShot(desk, out, 's5-workspaces');
   }
+  const card = process.env.HOS_DEMO_CARD_TOPIC ?? 'dark';
   if (want('s7')) {
-    await go(phone, `#/topic/${t('dark').topicId}`);
+    await go(phone, `#/topic/${t(card).topicId}`);
     await phone.getByRole('main').getByRole('group', { name: /^Permission request/ }).waitFor();
     await docShot(phone, out, 's7-phone-approval');
   }
@@ -267,7 +269,7 @@ async function shoot(out: string, only: string[]) {
     await docShot(desk, out, 's8-diff');
   }
   if (want('s9')) {
-    await thread('dark');
+    await thread(card);
     await desk.getByRole('main').getByRole('group', { name: /^Permission request/ }).waitFor();
     await desk.keyboard.press('Meta+k');
     await desk.keyboard.type('Stop all');
