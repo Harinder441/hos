@@ -220,7 +220,7 @@ export function holdReason(facts: TurnFacts, limits: GovernorLimits): string | n
   const max = limits.running[facts.pool] ?? 0;
   const reserved = parentReserve(facts.reserved, max);
   if (!(facts.parent && max > 0) && facts.running + reserved >= max) {
-    return `all ${max} ${poolLabel(facts.pool)} slots are running${facts.running < max ? ' or kept for parent chats' : ''}`;
+    return `all ${max} ${poolLabel(facts.pool)} slots are running${facts.running < max ? ' or kept for a parent chat' : ''}`;
   }
   const machine = facts.machine;
   if (machine) {
@@ -238,8 +238,8 @@ export function poolLabel(pool: string): string {
 }
 
 // At least one slot stays open to children, or a parent could wait forever on children that never start.
-export function parentReserve(parents: number, max: number): number {
-  return Math.min(parents, Math.max(0, max - 1));
+export function parentReserve(reserved: number, max: number): number {
+  return Math.min(reserved, Math.max(0, max - 1));
 }
 
 export function effectivePriority(priority: number, waitedMs: number): number {

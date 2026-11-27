@@ -1,8 +1,8 @@
-import { writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, expect, test } from 'vitest';
 import type { AgentChatSpec, AgentRuntime, AgentSink } from '../src/adapters/agent-runtime.js';
-import type { HosEvent } from '../src/api/types.js';
+import type { Chat, HosEvent } from '../src/api/types.js';
 import { callBus } from '../src/fakes/bus-client.js';
 import { FakeClock } from '../src/fakes/fake-clock.js';
 import { ScriptedAgentRuntime, type AgentScript } from '../src/fakes/scripted-agent-runtime.js';
@@ -101,9 +101,36 @@ test('a parent whose children hold every Claude slot still runs a turn a child s
 test('an idle parent keeps a Claude slot, so its children queue once only that slot is left', async () => {
   const { stream, lead, endpoint, spawn } = await leadWithSlots(2);
   const first = /chat ([0-9a-f-]{36})/.exec((await spawn('frontend form')).output)![1]!;
-  expect((await spawn('database migration')).output).toContain('It is queued (P2): all 2 Claude slots are running or kept for parent chats.');
+  expect((await spawn('database migration')).output).toContain('It is queued (P2): all 2 Claude slots are running or kept for a parent chat.');
 
   await stream.until((es) => lastState(es, first) === 'running');
   expect((await callBus(endpoint(first), 'send', { to: lead.id, text: 'which table?' })).output).not.toContain('queued');
   await stream.until((es) => es.filter((e) => e.type === 'message.completed' && e.chatId === lead.id).length === 2);
+});
+
+test('idle leads with no busy children keep no Claude slot, so a new worker still starts', async () => {
+  const brainDir = await tempDir('hos-brain-');
+  for (const id of ['generic', 'lead']) {
+    await mkdir(join(brainDir, 'profiles', id), { recursive: true });
+    await writeFile(join(brainDir, 'profiles', id, 'PROFILE.md'), `---\ndescription: ${id}\n---\n`);
+  }
+  const policyFile = join(await tempDir('hos-policy-'), 'policy.yaml');
+  await writeFile(policyFile, 'slots:\n  claude_running: 6\n');
+  const hos = await startTestDaemon({ brainDir, policyFile, agentRuntime: new ScriptedAgentRuntime(new FakeClock(), slowScript) });
+  const project = await hos.client.createProject(await tempGitRepo());
+  const stream = collect(hos.client);
+  const leads: Chat[] = [];
+  for (let i = 0; i < 8; i++) leads.push(await hos.client.addTopicChat((await newTopic(hos.client, project.id, `lead ${i}`)).id, { profile: 'lead' }));
+  for (const lead of leads) await hos.client.sendMessage(lead.id, 'plan');
+  await stream.until((es) => leads.every((lead) => es.some((e) => e.type === 'message.completed' && e.chatId === lead.id)));
+  expect(leads.every((lead) => lead.profile === 'lead')).toBe(true);
+  const others: Chat[] = [];
+  for (let i = 0; i < 5; i++) others.push(await hos.client.createChat((await newTopic(hos.client, project.id, `other ${i}`)).id));
+  for (const other of others) await hos.client.sendMessage(other.id, 'slow');
+  await stream.until((es) => others.every((other) => lastState(es, other.id) === 'running'));
+
+  const bus = hos.agentRuntime.started.filter((spec) => spec.chatId === others[0]!.id).at(-1)!.bus;
+  const { output } = await callBus(bus, 'spawn', { role: 'worker', intent: 'search index', prompt: 'slow search index', client_request_id: 'w-1' });
+  expect(output).not.toContain('queued');
+  expect(output).toContain('Claude slots free: 0 of 6.');
 });
