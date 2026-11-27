@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "hos actions",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "actions"],
+  "properties": {
+    "version": { "const": 1 },
+    "setup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["run"],
+      "properties": {
+        "run": { "type": "string", "minLength": 1 },
+        "does": { "type": "string", "minLength": 1 },
+        "skip": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "run", "where", "cwd", "confirm"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "maxLength": 32 },
+          "run": { "type": "string", "minLength": 1 },
+          "args": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }
+          },
+          "where": { "enum": ["host", "tmux"] },
+          "cwd": { "type": "string", "pattern": "^(worktree|brain|/.*)$" },
+          "confirm": { "type": "boolean" },
+          "passkey": { "type": "boolean" },
+          "label": { "type": "string", "minLength": 1, "maxLength": 60 },
+          "applies_to": {
+            "oneOf": [
+              { "const": "all" },
+              { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+            ]
+          },
+          "hosts": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+        }
+      }
+    }
+  }
+}

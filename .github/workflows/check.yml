@@ -1,0 +1,38 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:  # run it on a branch before landing: gh workflow run check.yml --ref <branch>
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(github.event.repository.private && '["ubuntu-latest"]' || '["ubuntu-latest", "macos-latest"]') }}  # macOS only on the public repo: private-repo macOS minutes cost 10x
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            docs/site/package-lock.json
+      - run: git config --global user.name ci && git config --global user.email ci@hos.local && git config --global init.defaultBranch main
+      - run: npm ci
+      - name: Type check
+        run: npx tsc --noEmit
+      - name: Lint (hover text on every control, generated recipe pages up to date)
+        run: node scripts/check-hover-text.mjs && node docs/site/scripts/gen-recipes.mjs --check
+      - name: Unit tests
+        run: npx vitest run --exclude '**/*.live.test.ts'
+      - name: Docs build
+        if: matrix.os == 'ubuntu-latest'
+        run: npm --prefix docs/site ci && npm --prefix docs/site run build

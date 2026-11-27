@@ -1,0 +1,35 @@
+# hos global actions: each becomes an app button and a bus tool; a repo's own actions file wins on a name clash
+# The daemon exports HOS_BRAIN (this repo), HOS_WORKTREE, PORT and HOS_SERVER (the workspace's server tmux session) to every action
+version: 1  # lets the daemon refuse a file written for a newer schema
+actions:
+  - name: preview  # Code view links for the worktree's changes
+    run: bash "$HOS_BRAIN/scripts/preview.sh" .
+    where: host  # preview.sh starts or reuses its own viewer tmux session
+    cwd: worktree
+    confirm: false  # read-only preview on loopback
+    passkey: false
+  - name: test  # repos with another runner override this in their own actions file
+    run: npm test
+    where: tmux  # output outlives the request and can be tailed
+    cwd: worktree
+    confirm: false
+    passkey: false
+  - name: open-pr
+    run: gh pr create --fill
+    where: host  # needs the host's gh login
+    cwd: worktree
+    confirm: true  # publishing is class A5
+    passkey: true  # step-up so a leaked session or a local agent can't publish
+  - name: deploy-html
+    run: bash "$HOS_BRAIN/.claude/skills/deploy-html/deploy.sh"
+    args: [path]  # file or folder to publish, appended to run
+    where: host  # reads the Cloudflare secrets from the Keychain
+    cwd: worktree
+    confirm: true  # the page becomes public to anyone with the link
+    passkey: true
+  - name: restart-server
+    run: tmux respawn-pane -k -t "$HOS_SERVER"
+    where: host  # drives the existing tmux session, which keeps its original command
+    cwd: worktree
+    confirm: false
+    passkey: false

@@ -1,0 +1,22 @@
+{
+  "name": "hos-docs",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",
+    "gen": "node scripts/gen-recipes.mjs",
+    "gen:check": "node scripts/gen-recipes.mjs --check",
+    "prebuild": "node scripts/gen-recipes.mjs",
+    "build": "ASTRO_TELEMETRY_DISABLED=1 astro build",
+    "preview": "ASTRO_TELEMETRY_DISABLED=1 astro preview",
+    "prebuild:check": "node scripts/gen-recipes.mjs",
+    "build:check": "ASTRO_TELEMETRY_DISABLED=1 node scripts/build-check.mjs"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "0.43.1",
+    "@fontsource-variable/overpass": "5.3.0",
+    "@fontsource-variable/overpass-mono": "5.3.0",
+    "astro": "7.3.8"
+  }
+}

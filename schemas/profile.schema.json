@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "hos profile frontmatter (profiles/<id>/PROFILE.md)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["description"],
+  "$defs": {
+    "names": {
+      "oneOf": [
+        { "const": "all" },
+        { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      ]
+    }
+  },
+  "properties": {
+    "description": { "type": "string", "minLength": 1, "description": "one line shown in the picker and the profile directory" },
+    "skills": { "$ref": "#/$defs/names", "description": "all, or the only skills the chat is offered (Claude harness)" },
+    "can_start": { "$ref": "#/$defs/names", "description": "all, or the profile ids this profile may spawn" },
+    "write_scope": { "enum": ["any", "work_dir"], "description": "work_dir: Edit/Write/NotebookEdit outside the work folder and scratch are refused" },
+    "turn_context": {
+      "type": "array",
+      "items": { "enum": ["roster", "tasks", "workspaces", "waiting", "other_topics"] },
+      "description": "blocks hos injects each turn when they change"
+    },
+    "handoff_skill": { "type": "string", "minLength": 1, "description": "skill a refresh or handoff runs" },
+    "handoff_at": { "type": ["number", "null"], "exclusiveMinimum": 0, "exclusiveMaximum": 1, "description": "share of the handoff line that refreshes the chat by itself; null = hos policy" },
+    "context_refresh": { "type": "boolean", "description": "true: the chat refreshes in place (Refresh context button, and handoff_at refreshes instead of handing off): it updates PROGRESS.md, then hos clears its context in the same chat" },
+    "color": { "type": ["string", "null"], "pattern": "^#[0-9a-fA-F]{6}$", "description": "hex colour: the chat tab takes a tint of it and the composer border the full colour" },
+    "harness": { "type": ["string", "null"], "minLength": 1, "description": "default harness for its chats (claude, or the id of an added harness); an explicit pick or spawn agent wins; not installed = today's default" },
+    "models": {
+      "type": "object",
+      "description": "per harness id, the default model and effort for its chats; an explicit pick or spawn wins; a model the harness lacks is skipped",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "model": { "type": "string", "pattern": "^[\\w.:-]{1,80}$" },
+          "effort": { "enum": ["low", "medium", "high", "xhigh", "max"] }
+        }
+      }
+    },
+    "hide_tools": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "not": { "enum": ["complete", "handoff_ready", "progress_read", "progress_update", "history_append"] } },
+      "description": "tools its chats never get: hos bus tools by bare name (server_start) and Claude built-ins by name (Agent, WebSearch, NotebookEdit); the five every chat needs can't be hidden"
+    },
+    "browser": { "type": "boolean", "description": "true: its chats start with the Browser on (the chip's default, and spawns that don't set browser); claude harness only" },
+    "picker": { "type": "boolean", "description": "false: spawn-only, left out of the composer's profile picker but still spawnable" }
+  }
+}

@@ -1,0 +1,57 @@
+name: release
+
+on:
+  workflow_dispatch:  # build-only: gh workflow run release.yml --ref <tag or branch> -f tag=v<package.json version>
+    inputs:
+      tag:
+        description: Release tag, v<package.json version>; it need not exist yet (then nothing is tagged)
+        required: true
+      starter:
+        description: Starter brain to boot with each profile (git URL); empty skips the boot
+        required: false
+        default: ''
+      starter_branch:
+        description: Branch of the starter to boot
+        required: false
+        default: main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: git config --global user.name ci && git config --global user.email ci@hos.local && git config --global init.defaultBranch main
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx vitest run --exclude '**/*.live.test.ts'
+      - name: Boot the starter with each of its profiles
+        if: inputs.starter != ''
+        run: npx vitest run test/starter-boot.live.test.ts
+        env:
+          HOS_STARTER: ${{ inputs.starter }}
+          HOS_STARTER_BRANCH: ${{ inputs.starter_branch }}
+      - run: npm run build
+      - name: Pin the tag and the SHA-256 of INSTALL.md into the prompt and the docs
+        run: node scripts/release.mjs --tag "$TAG" --out release
+        env:
+          TAG: ${{ inputs.tag }}
+      - name: Build the docs site with the pinned prompt
+        run: npm --prefix docs/site ci && npm --prefix docs/site run build && tar -C docs/site -czf release/docs-site.tar.gz dist
+        env:
+          DOCS_SITE: ${{ vars.DOCS_SITE }}
+      - name: Keep the docs edits as a patch
+        run: git diff -- docs/site > release/docs-prompt.patch
+      - run: node scripts/release.mjs --sums --out release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hos-release-${{ inputs.tag }}
+          path: release/

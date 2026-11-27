@@ -1,0 +1,17 @@
+.computer-picker { position: relative; }
+.computer-pick { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 8px; border: 0; border-radius: var(--r-ctl); background: none; color: var(--muted); font-size: var(--t-s); font-weight: 600; }
+.computer-pick:hover, .computer-pick[aria-expanded='true'] { background: var(--raised); color: var(--ink); }
+.computer-pick svg { width: 14px; height: 14px; }
+.computer-pick svg:last-child { width: 10px; height: 10px; }
+.computer-pop { position: absolute; bottom: calc(100% + 6px); left: 0; z-index: 20; width: 250px; background: var(--shoulder); border: 1px solid var(--line-strong); border-radius: 10px; box-shadow: 0 14px 36px rgb(0 0 0 / 0.35); padding: 6px; font-size: var(--t-s); }
+.computer-pop h4 { margin: 6px 8px 4px; font-size: var(--t-xs); font-weight: 600; color: var(--faint); }
+.computer-pop button { display: grid; gap: 1px; width: 100%; border: 0; background: none; color: inherit; padding: 6px 8px; border-radius: 4px; text-align: left; }
+.computer-pop button small { color: var(--muted); font-size: var(--t-xs); }
+.computer-pop button:hover:not(:disabled), .computer-pop button[aria-checked='true'] { background: var(--raised); }
+.computer-pop button:disabled { opacity: 0.5; cursor: default; }
+.computer-note { margin: 0; padding: 0 12px 6px; color: var(--muted); font-size: var(--t-xs); }
+.computer-note b { color: var(--amber); font-weight: 600; }
+.thread-pop button.opt:disabled, .new-chat-pop button:disabled { opacity: 0.45; cursor: default; }
+@media (max-width: 700px) {
+  .computer-pick { height: 40px; }
+}

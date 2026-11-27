@@ -1,0 +1,147 @@
+/* Overpass draws U+00B7 with zero advance; take the dot from a system face. */
+@font-face {
+  font-family: 'Hos Separator';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src:
+    local('Helvetica Neue'),
+    local('HelveticaNeue'),
+    local('Helvetica'),
+    local('Arial'),
+    url('@fontsource-variable/overpass-mono/files/overpass-mono-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+00B7;
+}
+
+:root {
+  color-scheme: dark;
+  --asphalt: #22272b;
+  --shoulder: #2c3237;
+  --ink: #ecefea;
+  --green: #0f7a57;
+  --amber: #f2b01e;
+  --red: #e5484d;
+  --kerb: #1d2226;
+  --raised: #343b41;
+  --line: rgb(236 239 234 / 0.11);
+  --line-strong: rgb(236 239 234 / 0.2);
+  --muted: rgb(236 239 234 / 0.66);
+  --faint: rgb(236 239 234 / 0.62);
+  --green-ink: #5cc79a;
+  --red-ink: #f07a7e;
+  --amber-ink: #1c2125;
+  --user-bg: rgb(15 122 87 / 0.22);
+  --code-bg: #1a1e21;
+  --add: #5cc79a;
+  --del: #f07a7e;
+  --add-bg: rgb(15 122 87 / 0.18);
+  --del-bg: rgb(229 72 77 / 0.14);
+  --focus: #f2b01e;
+
+  --ui: 'Hos Separator', 'Overpass Variable', 'Overpass', system-ui, -apple-system, sans-serif;
+  --code: 'Hos Separator', 'Overpass Mono Variable', 'Overpass Mono', ui-monospace, Menlo, monospace;
+  --t-xs: 12px;
+  --t-s: 13.5px;
+  --t-m: 15px;
+  --t-l: 18px;
+  --t-xl: 22px;
+  --r-tag: 2px;
+  --r-ctl: 6px;
+  --r-sheet: 12px;
+  --side-w: 268px;
+  --panel-w: 340px;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --asphalt: #e8ecea;
+  --shoulder: #f8faf9;
+  --ink: #1c2125;
+  --green: #0b6b4c;
+  --red: #c9323a;
+  --kerb: #dde3e0;
+  --raised: #d2d9d6;
+  --line: rgb(28 33 37 / 0.12);
+  --line-strong: rgb(28 33 37 / 0.22);
+  --muted: rgb(28 33 37 / 0.78);
+  --faint: rgb(28 33 37 / 0.72);
+  --green-ink: #0b6b4c;
+  --red-ink: #b02a31;
+  --user-bg: rgb(11 107 76 / 0.12);
+  --code-bg: #f1f4f2;
+  --add: #0b6b4c;
+  --del: #b02a31;
+  --add-bg: rgb(11 107 76 / 0.1);
+  --del-bg: rgb(201 50 58 / 0.09);
+  --focus: #0b6b4c;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']) {
+    color-scheme: light;
+    --asphalt: #e8ecea;
+    --shoulder: #f8faf9;
+    --ink: #1c2125;
+    --green: #0b6b4c;
+    --red: #c9323a;
+    --kerb: #dde3e0;
+    --raised: #d2d9d6;
+    --line: rgb(28 33 37 / 0.12);
+    --line-strong: rgb(28 33 37 / 0.22);
+    --muted: rgb(28 33 37 / 0.78);
+    --faint: rgb(28 33 37 / 0.72);
+    --green-ink: #0b6b4c;
+    --red-ink: #b02a31;
+    --user-bg: rgb(11 107 76 / 0.12);
+    --code-bg: #f1f4f2;
+    --add: #0b6b4c;
+    --del: #b02a31;
+    --add-bg: rgb(11 107 76 / 0.1);
+    --del-bg: rgb(201 50 58 / 0.09);
+    --focus: #0b6b4c;
+  }
+}
+
+/* The v1 names the kept views (Chat, Diff, Ops, Terminal, Gate) still use, mapped onto the palette above. */
+:root {
+  --text: var(--ink);
+  --gantry: var(--green);
+  --stop: var(--red);
+  --hover: color-mix(in srgb, var(--ink) 6%, transparent);
+  --sunk: var(--code-bg);
+  --go-text: var(--green-ink);
+  --go-sign: var(--green-ink);
+  --go-fill: var(--green);
+  --on-go: #ffffff;
+  --go-tint: color-mix(in srgb, var(--green) 22%, transparent);
+  --amber-tint: color-mix(in srgb, var(--amber) 16%, transparent);
+  --stop-text: var(--red-ink);
+  --stop-fill: #c9323a;
+  --on-stop: #ffffff;
+  --stop-tint: color-mix(in srgb, var(--red) 13%, transparent);
+  --font-ui: var(--ui);
+  --font-code: var(--code);
+  --fs-xs: var(--t-xs);
+  --fs-sm: var(--t-s);
+  --fs-md: var(--t-m);
+  --fs-lg: var(--t-l);
+  --fs-xl: var(--t-xl);
+  --lh: 1.45;
+  --lh-tight: 1.2;
+  --prose: 72ch;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --stripe: 4px;
+  --control-h: 34px;
+}
+
+@media (max-width: 700px) {
+  :root {
+    --t-m: 16px;
+    --control-h: 44px;
+  }
+}

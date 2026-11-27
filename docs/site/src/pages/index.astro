@@ -1,0 +1,173 @@
+---
+import '@fontsource-variable/overpass';
+import '@fontsource-variable/overpass-mono';
+import '../styles/landing.css';
+import { Image } from 'astro:assets';
+import { REPO } from '../order.mjs';
+import s1 from '../assets/shots/s1-lead.png';
+import s2 from '../assets/shots/s2-team.png';
+import s3 from '../assets/shots/s3-progress.png';
+import s4 from '../assets/shots/s4-profiles.png';
+import s5 from '../assets/shots/s5-workspaces.png';
+import s7 from '../assets/shots/s7-phone-approval.png';
+import s8 from '../assets/shots/s8-diff.png';
+import s9 from '../assets/shots/s9-guardrails.png';
+import s10 from '../assets/shots/s10-remote-access.png';
+
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+const docs = (slug: string) => `${base}docs/${slug}/`;
+const gh = 'https://github.com/Harinder441';
+const shots = { s1, s2, s3, s4, s5, s7, s8, s9, s10 };
+---
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>hos: run your agents like a team that remembers</title>
+<meta name="description" content="hos runs your coding agents as a team on your own computer: a lead, helpers, tasks and locks, approvals, and a brain in a git repo you own.">
+<link rel="icon" href={`${base}favicon.svg`} type="image/svg+xml">
+</head>
+<body>
+
+<nav><div class="wrap">
+  <a class="logo" href={base}><i></i>hos</a>
+  <div class="links"><a href="#why">Why</a><a href="#features">Features</a><a href="#compare">Compare</a><a href="#repos">Repos</a><a href={docs('what-hos-is')}>Docs</a><a href="#install">Install</a></div>
+  <div class="right"><a class="btn" href={REPO}>GitHub</a><a class="btn go" href="#install">Install</a></div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <p class="eyebrow">Open source · self-hosted · works with your coding agents</p>
+  <h1>Run your agents like<br>a team that remembers.</h1>
+  <p class="lede">A lead splits the work, helpers take roles, and shared tasks and file locks keep them out of each other's way. Their rules, skills and progress live in a git repo you own, so the next chat starts where the last one stopped. It runs on your own machines, in the browser you already use, with your phone one tap away. Claude is built in; any ACP agent plugs in.</p>
+  <div class="ctas">
+    <a class="btn go" href="#install">Get started</a>
+    <a class="btn" href={docs('what-hos-is')}>Read the docs</a>
+    <div class="install"><span>›</span> <b>paste one prompt</b> into your agent <span class="hide-s">· macOS · Linux</span></div>
+  </div>
+  <div class="shot"><Image src={shots.s1} alt="A lead chat's topic in hos: its reply, a web search waiting on an approval card, the helper's tab, and the task list with T1 done" loading="eager" /></div>
+</div></header>
+
+<section id="why"><div class="wrap pain">
+  <div>
+    <p class="eyebrow">The problem</p>
+    <h2>Agents forget. Windows multiply.</h2>
+    <p class="lede" style="font-size:18px">One agent is a chat. Five agents are a team, and nothing you have runs them like one. The plan disappears at compaction, two of them edit the same file, the rules live in a different file in every repo, and you still switch windows to see what they did.</p>
+    <ul>
+      <li><b>Compaction</b>where yesterday's plan goes</li>
+      <li><b>Collisions</b>two agents, one file</li>
+      <li><b>Copies</b>the same rules pasted into every repo</li>
+      <li><b>Windows</b>chat, editor, browser, terminal</li>
+    </ul>
+    <p style="margin-top:28px" class="arrow">→ hos gives them a lead, a task board, locks and a shared memory in git, in the browser you already have open.</p>
+  </div>
+  <div class="windows" aria-hidden="true">
+    <div class="win w1"><header>Chat · session 4</header><div class="body">» Context compacted.<br>» What were we doing again?</div></div>
+    <div class="win w2"><header>Chat · session 5</header><div class="body">» Edited Checkout.tsx<br>(so did session 4)</div></div>
+    <div class="win w3"><header>Editor</header><div class="body">CLAUDE.md · AGENTS.md · rules files</div></div>
+    <div class="win w4"><header>Terminal · 3 tabs</header><div class="body">$ npm run dev<br>Error: port 4173 in use</div></div>
+  </div>
+</div></section>
+
+<section id="features"><div class="wrap">
+  <p class="eyebrow">Major features</p>
+  <h2>Everything a team of agents needs, on hardware you own.</h2>
+  <p class="lede" style="font-size:18px">All of it is in the open-source repo. Amber tags mark what no product in our comparison has as a full feature, as far as our research of 2026-11-26 found.</p>
+  <div class="grid">
+    <div class="feat"><span class="tag only">Tasks + locks · only here</span><h3>A lead, roles, tasks and locks</h3><p>A lead chat splits the work into tasks and starts helpers with a role: worker, reviewer, scout. Writers lock the files they own: another chat's edits there are refused, and shell writes are caught right after they run. Chats message each other.</p><div class="mini"><Image src={shots.s2} alt="A helper chat's tab with its edits and test run opened; the task list shows T1 done with its done-when checks" /></div></div>
+    <div class="feat"><span class="tag only">Memory · only here</span><h3>Pick up where they left off</h3><p>Each job gets a work folder with a PROGRESS.md the agents keep true. When a chat runs long, you ask it to hand off to a fresh one with a written handoff instead of a lossy summary. A daily log says what got done.</p><div class="mini"><Image src={shots.s3} alt="A lead chat after a context refresh: it rereads PROGRESS.md, its tasks and roster, then sums up; the side panel shows the files the topic touched" /></div></div>
+    <div class="feat"><span class="tag only">Brain · only here</span><h3>Your setup is a git repo</h3><p>Rules, skills, profiles and memory live in one repo that every chat runs in, whatever repo it is working on. hos commits what agents write there. Start from hos-brain: five profiles and seven skills, plus the hos skill and its recipes, which hos copies in.</p><div class="mini"><Image src={shots.s4} alt="The Profile picker in New chat" /></div></div>
+    <div class="feat"><span class="tag">Computers</span><h3>Drive your other machines</h3><p>Pair a second machine you own, like a Linux box or a spare Mac, and start chats there from the same screen. One topic list, one inbox, chats that message across machines.</p><div class="mini"><div class="mach"><div><b>this Mac</b>3 chats · 2 slots free</div><div><b>linux-box</b>1 chat · 5 slots free<br>pairing code, 10 min</div></div></div></div>
+    <div class="feat"><span class="tag">Phone</span><h3>Approve from your pocket</h3><p>Install it as an app from Safari or Chrome. Push tells you when an approval, a plan or a question waits; answer in one tap. Diffs stack, terminals get a key bar. Push payloads are encrypted for your device.</p><div class="mini"><Image src={shots.s7} alt="An approval card on the phone" /></div></div>
+    <div class="feat"><span class="tag">Reach it from anywhere</span><h3>Your network, no relay</h3><p>It listens on localhost. Publish it inside your own Tailscale tailnet, or behind your own Cloudflare Tunnel and Access login. No relay of ours sits in the path, and you sign in with a passkey.</p><div class="mini"><Image src={shots.s10} alt="Settings, Phone & remote access" /></div></div>
+    <div class="feat"><span class="tag">Harnesses</span><h3>Bring your coding agent</h3><p>Claude comes built in and runs under your own Claude login. Agents that speak ACP plug in through the generic ACP harness; anything else through the <a href={docs('add-a-harness')}>Add a harness</a> guide.</p><div class="mini pad"><div class="harn"><div><b>Claude</b><span class="ok">built in · signed in</span></div><div><b>Any ACP agent</b><span class="ok">generic ACP harness</span></div><div class="add">+ Add a harness → guide</div></div></div></div>
+    <div class="feat"><span class="tag">Review</span><h3>Read every diff</h3><p>Every changed file opens in the diff view: the worktree against its base, one chat's edits, or one commit. Comment on lines, then send the comments to a chat as its next message. Code view opens the whole repo and its pull requests.</p><div class="mini"><Image src={shots.s8} alt="The diff view with a line comment for the chat" /></div></div>
+    <div class="feat"><span class="tag">Guardrails</span><h3>Limits you set once</h3><p>Every tool call gets a class, from read to push to config change, and your policy says which run and which ask. A governor keeps concurrent chats inside your plan's limits. One switch stops every agent.</p><div class="mini"><Image src={shots.s9} alt="An approval card and the Stop all chats confirm" /></div></div>
+  </div>
+
+  <div class="row">
+    <div class="txt">
+      <p class="eyebrow">Workspaces</p>
+      <h2>A worktree, a port and a server per job.</h2>
+      <p class="lede" style="font-size:17px">Pick a repo and hos makes the worktree, runs your setup script, gives it a stable port and starts its dev server. Terminals live in the app, and you can take over a chat's session when it gets stuck.</p>
+      <ul><li>Root, existing worktree, or a new one, from one picker</li><li>Preview links that work from the phone too</li><li>Commit, push and open the PR from the panel</li></ul>
+    </div>
+    <div class="shot flat"><Image src={shots.s5} alt="The workspace picker a chat raised: the repo root, an existing worktree and Create a new worktree" /></div>
+  </div>
+</div></section>
+
+<section id="compare"><div class="wrap">
+  <p class="eyebrow">How it compares · checked 2026-11-26</p>
+  <h2>Where hos sits.</h2>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Product</th><th>Team that outlives a session (tasks, locks, progress)</th><th>Agent setup in a git repo you own</th><th>Diff line comments → agent</th><th>Phone with no vendor relay</th><th>Harnesses</th><th>Open source</th></tr></thead>
+    <tbody>
+      <tr class="us"><td>hos</td><td class="y">yes</td><td class="y">yes, the brain</td><td class="y">yes</td><td class="y">yes</td><td>Claude + any ACP agent</td><td class="y">Apache-2.0</td></tr>
+      <tr><td>T3 Code</td><td class="p">delegation + messages; no task board or progress doc</td><td class="n">no</td><td class="y">yes</td><td class="p">LAN/Tailscale; push needs T3 Connect</td><td class="y">10+ and any ACP agent</td><td class="y">MIT</td></tr>
+      <tr><td>Conductor</td><td class="p">agents start and message agents</td><td class="p">reads CLAUDE.md/AGENTS.md</td><td class="y">yes</td><td class="n">relayed (encrypted)</td><td class="y">several</td><td class="n">no</td></tr>
+      <tr><td>Claude Desktop + Remote Control</td><td class="p">agent teams: CLI only, experimental</td><td class="p">CLAUDE.md, memory</td><td class="y">yes</td><td class="n">relayed via Anthropic</td><td class="n">Claude</td><td class="n">no</td></tr>
+      <tr><td>Cursor</td><td class="p">Projects task board, cloud only; no locks</td><td class="p">rules files</td><td class="p">on PRs only</td><td class="n">via Cursor's cloud</td><td class="n">Cursor's</td><td class="n">no</td></tr>
+      <tr><td>Codex app</td><td class="p">subagents; no task board or locks</td><td class="p">AGENTS.md, memories</td><td class="y">yes</td><td class="n">relayed</td><td class="n">Codex</td><td class="p">CLI and SDK (Apache-2.0)</td></tr>
+      <tr><td>Cline Kanban</td><td class="p">task chains; no locks</td><td class="n">no</td><td class="y">yes</td><td class="y">yes (SSH/Tailscale)</td><td class="y">several</td><td class="y">Apache-2.0</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="honest">Honest note: T3 Code is ahead of hos on harnesses, native phone apps, a built-in preview browser and PR review. If those matter most, use it. hos is for running agents as a team over days, with their setup and memory in a repo you own.</p>
+</div></section>
+
+<section id="repos"><div class="wrap">
+  <p class="eyebrow">Three repos</p>
+  <h2>Make all of them yours.</h2>
+  <p class="lede" style="font-size:18px">The app is one repo. Your agents' rules, skills and memory start from a second, hos-brain, which becomes your private repo. The code viewer is a third. Pull our changes when you want them.</p>
+  <div class="repos">
+    <div class="repo"><code>hos</code><p>The server and the web app. Harnesses and data sources plug in from your brain without touching the rest; a new transport is a small code change. Apache-2.0.</p></div>
+    <div class="repo"><code>hos-brain</code><p>The starter brain: AGENTS.md, five profiles, seven skills, example policy and schedules. hos adds the <b>hos</b> skill, whose recipes change hos for you, from creating a profile to adding a harness. MIT.</p></div>
+    <div class="repo"><code>hos-code</code><p>The browser code viewer and PR reviewer behind Code view, with what hos needs to open files from a chat. Optional. MIT.</p></div>
+  </div>
+  <div class="flow"><b>github.com/Harinder441/hos</b>        ──clone or fork──▶  <b>~/code/hos</b>
+<b>github.com/Harinder441/hos-brain</b>  ──clone, repoint──▶  <b>you/hos-brain</b>        <i># private; your rules and memory</i>
+<b>github.com/Harinder441/hos-code</b>   ──release binary──▶  <b>~/.local/bin/hos-code</b>  <i># optional</i></div>
+</div></section>
+
+<section id="install"><div class="wrap">
+  <p class="eyebrow">Install</p>
+  <h2>One prompt into your own agent.</h2>
+  <p class="lede" style="font-size:17px">Paste this into Claude Code or any agent that runs shell commands. It checks the install file against its hash, tells you what it will change, asks a few questions, and stops for your sign-ins and your passkey. You approve every command.</p>
+  <!-- TODO-T19: the release job writes the tag and the SHA-256 into this block. -->
+  <div class="term"><span class="c"># paste into your agent</span>
+Install hos on this computer. Download https://raw.githubusercontent.com/Harinder441/hos/v0.1.0/install/INSTALL.md with curl, check that its SHA-256 is <span class="p">&lt;hash&gt;</span>, and stop if it is not. Tell me in five lines what it will change, then follow it exactly.</div>
+  <div class="req"><span>macOS or Linux</span><span>Node 22+ and git</span><span>Claude Code, signed in with your own account</span><span>gh, for your private brain repo</span><span>optional: Tailscale or Cloudflare for the phone</span></div>
+  <p class="note">hos never runs sudo, and there is no <code>curl | sh</code>. Usage is billed to your own Claude plan; hos never handles your credentials. <a href={docs('install')}>What it changes, step by step →</a></p>
+</div></section>
+
+<section id="faq"><div class="wrap">
+  <p class="eyebrow">Questions</p>
+  <h2>Straight answers.</h2>
+  <div class="faq">
+    <div><h3>Why not T3 Code?</h3><p>If you want the most harnesses and native phone apps, T3 Code is great. hos is for agents that work as a team over days, with their memory in git.</p></div>
+    <div><h3>Is this allowed with my Claude plan?</h3><p>You sign in through Claude's own login, on your machine, with your own account. hos never sees the credential, and you never share an account. <a href={docs('security')}>Sign-in and security</a>.</p></div>
+    <div><h3>Why a brain repo?</h3><p>So your rules, skills and agents' progress are files you can read, diff and revert, not settings hidden in an app. The install makes it a private repo you own.</p></div>
+    <div><h3>Is it safe to expose my machine?</h3><p>It listens on localhost by default. Remote access goes only through your own Tailscale tailnet or Cloudflare Access, plus a passkey. Agents' pushes to your code repos follow your approvals policy; hos pushes your brain only to its own origin, your private repo. <a href={docs('security')}>Security model</a>.</p></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <p class="eyebrow">Why hos exists</p>
+  <div class="why">
+    <p>I built hos because I was running five or six agents a day, and they kept behaving like strangers. Each new session started from zero. Two of them would edit the same file. The plan I'd agreed with one was gone after compaction, and I was the only one who remembered what had been done.</p>
+    <p>So I gave them what a team has: a lead who splits the work, a task board, locks, a progress doc they keep true, and one repo for the rules and skills they all follow. It runs on my own machines, I check it from my phone, and I read every diff before it ships. Fork it and make it yours.</p>
+    <p class="sig">Harinder, author of hos</p>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <div><a class="logo" href={base}><i></i>hos</a><p>Open source. Runs on your machines.<br>Not affiliated with Anthropic. Claude is a trademark of Anthropic.</p></div>
+  <div><h4>Product</h4><a href="#features">Features</a><a href="#compare">Compare</a><a href="#install">Install</a><a href={`${REPO}/releases`}>Releases</a></div>
+  <div><h4>Docs</h4><a href={docs('what-hos-is')}>Getting started</a><a href={docs('add-a-harness')}>Add a harness</a><a href={docs('security')}>Security</a><a href={`${base}llms.txt`}>llms.txt</a></div>
+  <div><h4>Repos</h4><a href={REPO}>hos</a><a href={`${gh}/hos-brain`}>hos-brain</a><a href={`${gh}/hos-code`}>hos-code</a></div>
+</div></footer>
+</body>
+</html>

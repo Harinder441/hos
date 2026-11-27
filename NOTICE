@@ -1,0 +1,8 @@
+hos
+Copyright 2026 the hos authors
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+The web app bundles third-party software under their own licences; their notices
+are in THIRD_PARTY_NOTICES.md. The code viewer hos-code is a separate program
+(MIT, a fork of px0) with its own notices.

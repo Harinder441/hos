@@ -1,0 +1,4 @@
+.astro/
+dist/
+dist-check/
+node_modules/

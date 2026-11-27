@@ -1,0 +1,64 @@
+# hos policy, read by the hos daemon. Check it with: npm --prefix hos run validate
+version: 1  # lets the daemon refuse a file written for a newer schema
+
+context:  # context lifecycle; resolved per agent, then per workspace, then these globals
+  mode: ladder  # ladder = the handoff line below; single = single_line instead
+  handoff: 180000  # where the context ring is full; display only, a handoff starts only when the user asks
+  backstop: 250000  # native auto-compaction window, so a chat nobody hands off degrades instead of rotting
+  single_line: 200000  # the one handoff line used when mode is single
+  work_root: work  # brain-relative root of the work folders (work/<area>/<date>-<slug>/); each topic's WORK_DIR and PROGRESS.md live there
+  agents: {}  # per-agent overrides of mode and the three lines; beat workspace and global
+  workspaces: {}  # per-workspace overrides keyed by workspace name; beat global
+
+slots:  # how many things may run at once on the 16 GB Air
+  claude_running: 6  # running Claude chats; idle ones don't count and quota, not RAM, is the real limit
+  heavy_jobs: 2  # builds, test suites and dev servers are what actually eat memory
+  idle_suspend_minutes: 30  # stops idle chat processes to free memory; they resume on the next message
+
+spawn:  # deterministic guards the governor applies to every spawn
+  max_depth: 2  # main 0, worker or reviewer 1, scout 2; deeper trees lose the plot
+  max_spawns_per_10_minutes: 6  # runaway brake per workspace
+  dedup_window_hours: 24  # the same intent hash within this window joins the existing chat
+  similarity_needs_approval: 0.85  # trigram similarity at or above this needs confirm_similar from a main chat or worker
+
+budgets:  # token ceilings
+  cross_chat_context_share: 0.1  # max share of a chat's context filled from other chats; past it the bus says spawn a scout
+
+provider_windows:  # admission follows the Claude subscription windows
+  five_hour_steps:  # Claude 5-hour window usage steps; the highest step reached applies
+    - { at_pct: 70, effect: cheaper_models }  # new workers on Sonnet, scouts on Haiku
+    - { at_pct: 85, effect: top_priorities_only }  # admit P0-P1 only; P2 and below queue
+    - { at_pct: 95, effect: pause_batch }  # pause batch work and ping the phone with the reset time
+  weekly_batch_off_pct: 80  # weekly usage above this turns P4 batch off until reset
+  peak_defer:  # Claude's 5-hour window drains faster during US weekday mornings
+    days: [mon, tue, wed, thu, fri]  # the faster drain applies on weekdays only
+    start: "05:00"
+    end: "11:00"
+    timezone: America/Los_Angeles
+
+approvals:  # per class: lane_t = what every chat gets; auto | ask (one card per call) | ask_every_time | deny
+  A0: { name: read, lane_t: auto }  # reads change nothing
+  A1: { name: spawn_read_only, lane_t: auto }  # scouts, still inside the spawn guards
+  A2: { name: spawn_writer, lane_t: auto, ask_from_roles: [worker] }  # writers a main chat spawns run; a worker asking for a writer needs the user
+  A3: { name: local_write, lane_t: auto }  # edits and commits inside owned files of its own worktree
+  A4: { name: network_install, lane_t: ask }  # npm i and new domains
+  A5: { name: publish, lane_t: ask_every_time }  # push, PR and deploy-html leave the machine, so they always ask
+  A5w: { name: publish_work, lane_t: ask_every_time }  # push or gh write to a work_remotes repo reaches other people
+  A6: { name: outward_comms, lane_t: ask_every_time }  # Slack or email to other people; comms only drafts
+  A6b: { name: ping_own_phone, lane_t: auto }  # send-message text to the user's own number
+  A7: { name: prod_secrets_aws, lane_t: ask_every_time }  # prod, Secrets Manager and AWS mutations ask per call
+  A8: { name: brain_config, lane_t: ask }  # identity, CLAUDE.md, settings, this file, ~/.claude; global changes only via manage-agent-config
+
+work_remotes: [github.com/acme-corp]  # pushes to these owners are publish_work (A5w)
+
+read_only_mcp: [mail-bridge]  # this server's search, read, list and get tools only read (A0)
+
+script_classes:  # scripts hos can't judge by name: part of the path → action class
+  ping-me/: A6b  # texts the user's own phone
+  site-upload/: A5  # puts a page on the web
+
+transport: tailscale  # tailscale = tailnet only; cloudflare = Tunnel plus Access, reachable from any browser
+
+ports:  # stable per-worktree ports: a hash of the worktree name into this range
+  from: 4100  # above the usual 3000 and 4000 dev defaults
+  to: 4999  # stops below 5000, which the macOS AirPlay receiver holds

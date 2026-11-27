@@ -1,0 +1,38 @@
+/* hos dark tokens (web/src/styles/tokens.css) mapped onto Starlight's variables. */
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --sl-font: 'Overpass Variable', system-ui, -apple-system, sans-serif;
+  --sl-font-mono: 'Overpass Mono Variable', ui-monospace, Menlo, monospace;
+  --sl-color-accent-low: #0d3b2c;
+  --sl-color-accent: #0f7a57;
+  --sl-color-accent-high: #5cc79a;
+  --sl-color-white: #ecefea;
+  --sl-color-gray-1: #dfe3dd;
+  --sl-color-gray-2: #c3c8c1;
+  --sl-color-gray-3: #9aa09a;
+  --sl-color-gray-4: #6b726e;
+  --sl-color-gray-5: #343b41;
+  --sl-color-gray-6: #2c3237;
+  --sl-color-black: #1d2226;
+  --sl-color-bg-nav: #1d2226;
+  --sl-color-bg-sidebar: #1d2226;
+  --sl-color-hairline: rgb(236 239 234 / 0.11);
+  --sl-color-hairline-light: rgb(236 239 234 / 0.2);
+  --sl-color-blue-low: #0d3b2c;
+  --sl-color-blue: #0f7a57;
+  --sl-color-blue-high: #5cc79a;
+  --sl-color-orange-high: #f2b01e;
+  --sl-color-orange-low: #3b2f12;
+  --sl-color-orange: #f2b01e;
+}
+
+.sl-markdown-content code:not(:where(.not-content *)) {
+  background: #1a1e21;
+  border: 1px solid rgb(236 239 234 / 0.11);
+  border-radius: 4px;
+  padding: 0.05em 0.35em;
+}
+
+.sl-markdown-content img{border:1px solid var(--sl-color-hairline);border-radius:8px}
+.sl-markdown-content img[src*="s7-phone"]{max-width:320px}

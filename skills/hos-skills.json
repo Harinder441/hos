@@ -1,0 +1,16 @@
+{
+  "about": "The hos-owned skills. hos skills sync copies every folder here into a brain's .claude/skills/. hos init --adopt also appends each skill to the listed profiles when that profile has its own skills: list (a profile without one already gets every skill).",
+  "skills": {
+    "canvas": { "profiles": [] },
+    "diagram": { "profiles": ["lead", "engineer", "product"] },
+    "fresh-chat": { "profiles": ["lead", "engineer", "product"] },
+    "handoff": { "profiles": ["lead", "engineer", "product"] },
+    "history": { "profiles": ["lead", "ritual"] },
+    "hos": { "profiles": ["lead", "engineer", "product"] },
+    "hos-schedule": { "profiles": ["ritual"] },
+    "lead-refresh": { "profiles": ["lead"] },
+    "quick-search": { "profiles": ["lead", "product"] },
+    "restart": { "profiles": ["lead", "engineer", "product"] },
+    "update-progress": { "profiles": ["lead", "engineer", "product", "ritual"] }
+  }
+}

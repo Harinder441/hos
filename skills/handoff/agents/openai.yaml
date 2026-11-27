@@ -1,0 +1,4 @@
+interface:
+  display_name: "Handoff"
+  short_description: "Self-contained brief for another agent or a fresh session"
+  default_prompt: "Use $handoff to write a brief a cold agent can run: resolve the target path and branch now, copy the existing precedent's names, scrub placeholders and volatile numbers, then give me the file path and the one-line paste prompt."
