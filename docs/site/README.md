@@ -49,6 +49,10 @@ scripts/demo-hos.sh stop
   question the lead asked in the run these shots come from. If a run goes another way, drive it step by step instead
   (`topic`, `send`, `status`, `shoot <dir> s2,s3`) and look at each shot.
 - s1 needs the lead's web search still waiting on its approval card, so the story takes it at that moment.
+- Shots are 2x: desktop 1280×800 (2560×1600 files), s1 1440×900 (2880×1800) because it is the product page's
+  front window, the phone 390×844. The product page serves them as resized AVIF/WebP through `<Picture>`.
+- Restarting the demo hos cancels waiting approval cards and hos resumes those chats with a crash notice. To re-take
+  s7 and s9 on another topic's waiting card, set `HOS_DEMO_CARD_TOPIC` (default `dark`).
 - Before you commit new shots, look at each one at full size. Check for names, emails, hostnames and home-folder
   paths; open tool calls can show a file owner's user name. The script strips PNG metadata.
 - `scripts/ui-shots.ts --docs` still makes the older scripted-agent set, without Claude.
