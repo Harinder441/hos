@@ -1,0 +1,62 @@
+name: wsl-probe
+on:
+  push:
+    branches: [docs/windows-wsl]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  wsl:
+    runs-on: windows-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        wsl-version: ['2', '1']
+    defaults:
+      run:
+        shell: wsl-bash {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Vampire/setup-wsl@v7
+        with:
+          distribution: Ubuntu-24.04
+          wsl-version: ${{ matrix.wsl-version }}
+          wsl-conf: |
+            [boot]
+            systemd=true
+          additional-packages: curl ca-certificates xz-utils git build-essential python3 tmux
+      - name: what WSL is this
+        run: |
+          uname -a
+          cat /proc/version
+          echo "WSL_DISTRO_NAME=${WSL_DISTRO_NAME:-unset} WSL_INTEROP=${WSL_INTEROP:-unset}"
+          echo "pid1=$(cat /proc/1/comm)"
+          pwd
+      - name: wsl -l -v (Windows side)
+        shell: pwsh
+        run: wsl.exe -l -v
+      - name: Node 22 into the Linux home
+        run: |
+          cd ~
+          curl -fsSLO https://nodejs.org/dist/v22.20.0/node-v22.20.0-linux-x64.tar.xz
+          tar -xJf node-v22.20.0-linux-x64.tar.xz
+          ~/node-v22.20.0-linux-x64/bin/node --version
+      - name: preflight from the Windows drive (/mnt)
+        run: |
+          export PATH="$HOME/node-v22.20.0-linux-x64/bin:$PATH"
+          node install/preflight.mjs || true
+          node install/preflight.mjs --json > /tmp/pre-mnt.json || true
+          node -e 'const r=require("/tmp/pre-mnt.json").rows.find(r=>r.id==="wsl");console.log(JSON.stringify(r));if(!r)process.exit(1)'
+      - name: clone into the Linux home, preflight, npm ci, build
+        run: |
+          export PATH="$HOME/node-v22.20.0-linux-x64/bin:$PATH"
+          git config --global --add safe.directory '*'
+          git clone -q "$PWD" ~/hos
+          cd ~/hos
+          node install/preflight.mjs || true
+          node install/preflight.mjs --json > /tmp/pre-home.json || true
+          node -e 'const r=require("/tmp/pre-home.json").rows.find(r=>r.id==="wsl");console.log(JSON.stringify(r))'
+          npm ci --no-audit --no-fund
+          npm run build
+          node dist/daemon/main.js --version

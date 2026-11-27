@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
-import { existsSync, statfsSync } from 'node:fs';
+import { existsSync, readFileSync, statfsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { createServer } from 'node:net';
 import { arch as osArch, homedir } from 'node:os';
@@ -55,6 +55,14 @@ function freeBytes(dir) {
   }
 }
 
+function readText(path) {
+  try {
+    return readFileSync(path, 'utf8');
+  } catch {
+    return null;
+  }
+}
+
 const row = (id, label, status, detail, fix) => ({ id, label, status, detail, ...(fix ? { fix } : {}) });
 const firstLine = (text) => text.split('\n')[0] ?? '';
 
@@ -81,6 +89,29 @@ function claudeRow(machine, options) {
   return row('claude', label, 'ok', `${which}: signed in${plan ? ` (${plan} plan)` : ''}`);
 }
 
+function wslRow(machine, hosRoot, port) {
+  if (machine.platform !== 'linux') return null;
+  const kernel = machine.readText('/proc/version') ?? '';
+  if (!machine.env.WSL_DISTRO_NAME && !/microsoft/i.test(kernel)) return null;
+  const distro = machine.env.WSL_DISTRO_NAME ? ` (${machine.env.WSL_DISTRO_NAME})` : '';
+  if (!/WSL2|microsoft-standard/i.test(kernel)) {
+    return row('wsl', 'Windows (WSL)', 'fail', `WSL 1${distro}: hos needs WSL 2`, 'in PowerShell on Windows run wsl --set-version <distro> 2 (wsl -l -v lists your distros), then open the distro again (INSTALL.md, Windows (WSL2))');
+  }
+  const notes = [];
+  const fixes = [];
+  if (hosRoot.startsWith('/mnt/')) {
+    notes.push(`the hos folder ${hosRoot} is on the Windows drive`);
+    fixes.push('clone hos into your Linux home (for example ~/code/hos), not under /mnt/');
+  }
+  if ((machine.readText('/proc/1/comm') ?? '').trim() !== 'systemd') {
+    notes.push('systemd is off, so start at login cannot be installed');
+    fixes.push('run it yourself: sudo nano /etc/wsl.conf and add the two lines [boot] and systemd=true, then wsl --shutdown in PowerShell and open the distro again; or skip start at login and start hos by hand');
+  }
+  return notes.length
+    ? row('wsl', 'Windows (WSL)', 'warn', `WSL 2${distro}: ${notes.join('; ')}`, fixes.join('; '))
+    : row('wsl', 'Windows (WSL)', 'ok', `WSL 2${distro}: open hos at http://localhost:${port} in your Windows browser`);
+}
+
 function toolchainRow(machine) {
   if (machine.platform === 'darwin') {
     const x = machine.run('xcode-select', ['-p']);
@@ -103,8 +134,10 @@ export async function preflight(options = {}, machine = thisMachine()) {
   rows.push(
     machine.platform === 'darwin' || machine.platform === 'linux'
       ? row('os', 'Operating system', 'ok', `${machine.platform} ${machine.arch}`)
-      : row('os', 'Operating system', 'fail', `${machine.platform} is not supported`, 'hos runs on macOS or Linux'),
+      : row('os', 'Operating system', 'fail', `${machine.platform} is not supported`, machine.platform === 'win32' ? 'use WSL2: see INSTALL.md, Windows (WSL2)' : 'hos runs on macOS or Linux'),
   );
+  const wsl = wslRow(machine, hosRoot, port);
+  if (wsl) rows.push(wsl);
 
   const major = Number.parseInt(machine.nodeVersion.replace(/^v/, ''), 10);
   rows.push(
@@ -160,7 +193,7 @@ export async function preflight(options = {}, machine = thisMachine()) {
 }
 
 export function thisMachine() {
-  return { platform: process.platform, arch: osArch(), nodeVersion: process.version, home: homedir(), env: process.env, run: exec, portFree, freeBytes };
+  return { platform: process.platform, arch: osArch(), nodeVersion: process.version, home: homedir(), env: process.env, run: exec, portFree, freeBytes, readText };
 }
 
 export function preflightText(result) {

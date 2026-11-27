@@ -18,7 +18,7 @@ const ok = (stdout = ''): Run => ({ ok: true, found: true, stdout, stderr: '' })
 const failed = (stdout = ''): Run => ({ ok: false, found: true, stdout, stderr: '' });
 const absent: Run = { ok: false, found: false, stdout: '', stderr: '' };
 
-function fakeMachine(overrides: Record<string, Run> = {}, extra: Partial<{ platform: string; nodeVersion: string; free: number | null; portFree: boolean; home: string }> = {}) {
+function fakeMachine(overrides: Record<string, Run> = {}, extra: Partial<{ platform: string; nodeVersion: string; free: number | null; portFree: boolean; home: string; env: Record<string, string>; files: Record<string, string> }> = {}) {
   const calls: string[] = [];
   const answers: Record<string, Run> = {
     'npm --version': ok('11.0.0'),
@@ -37,15 +37,16 @@ function fakeMachine(overrides: Record<string, Run> = {}, extra: Partial<{ platf
       arch: 'arm64',
       nodeVersion: extra.nodeVersion ?? 'v22.15.0',
       home: extra.home ?? '/nonexistent-home',
-      env: { CLAUDE_CODE_ENTRYPOINT: 'x', ANTHROPIC_API_KEY: '<token>', CLAUDE_CONFIG_DIR: '/c', PATH: '/bin' },
+      env: { CLAUDE_CODE_ENTRYPOINT: 'x', ANTHROPIC_API_KEY: '<token>', CLAUDE_CONFIG_DIR: '/c', PATH: '/bin', ...extra.env },
       run(bin: string, args: string[], options?: { env?: Record<string, string> }) {
         const key = `${bin.split('/').pop()} ${args.join(' ')}`;
         calls.push(key);
-        if (key === 'claude auth status') expect(options?.env).toEqual({ CLAUDE_CONFIG_DIR: '/c', PATH: '/bin' });
+        if (key === 'claude auth status') expect(options?.env).toEqual({ CLAUDE_CONFIG_DIR: '/c', PATH: '/bin', ...extra.env });
         return answers[key] ?? (bin === 'sh' ? ok() : absent);
       },
       portFree: async () => extra.portFree ?? true,
       freeBytes: () => (extra.free === undefined ? 50 * 1024 ** 3 : extra.free),
+      readText: (path: string) => extra.files?.[path] ?? null,
     },
   };
 }
@@ -87,6 +88,48 @@ test('before npm ci, preflight checks the PATH claude and asks for a second run;
   expect(claude.fix).toContain('again after npm ci');
   expect(status(result).existing).toBe('warn');
   expect(result.ok).toBe(true);
+});
+
+const WSL2_KERNEL = 'Linux version 6.6.87-microsoft-standard-WSL2 (root@439a258ad544) (gcc (GCC) 11.2.0) #1 SMP PREEMPT_DYNAMIC';
+const WSL1_KERNEL = 'Linux version 4.4.0-26100-Microsoft (Microsoft@Microsoft.com) (gcc version 5.4.0 (GCC) ) #5074-Microsoft';
+
+async function wslRow(files: Record<string, string>, hosRoot = '/opt/code/hos', env: Record<string, string> = { WSL_DISTRO_NAME: 'Ubuntu' }) {
+  const { machine } = fakeMachine({}, { platform: 'linux', env, files });
+  const result = await pre.preflight({ hosRoot, claudeBin: '/x/claude', dataDir: '/nonexistent-data' }, machine);
+  return { result, wsl: result.rows.find((r: { id: string }) => r.id === 'wsl') };
+}
+
+test('preflight adds a WSL row after the OS row: ok on WSL 2 with systemd, and no row on plain Linux or a Mac', async () => {
+  const { result, wsl } = await wslRow({ '/proc/version': WSL2_KERNEL, '/proc/1/comm': 'systemd\n' });
+  expect(result.rows.map((r: { id: string }) => r.id).slice(0, 3)).toEqual(['os', 'wsl', 'node']);
+  expect([wsl!.status, wsl!.detail]).toEqual(['ok', 'WSL 2 (Ubuntu): open hos at http://localhost:4517 in your Windows browser']);
+  expect(result.ok).toBe(true);
+  expect((await wslRow({ '/proc/version': 'Linux version 6.8.0-49-generic', '/proc/1/comm': 'systemd\n' }, undefined, {})).wsl).toBeUndefined();
+  expect((await wslRow({ '/proc/version': WSL2_KERNEL }, undefined, {})).wsl!.detail).toContain('WSL 2:');
+  const mac = await pre.preflight({ hosRoot: '/nonexistent', claudeBin: '/x/claude', dataDir: '/nonexistent-data' }, fakeMachine({}, { env: { WSL_DISTRO_NAME: 'Ubuntu' } }).machine);
+  expect(mac.rows.some((r: { id: string }) => r.id === 'wsl')).toBe(false);
+});
+
+test('preflight fails WSL 1 with the convert command, and warns for a checkout under /mnt/ or systemd off', async () => {
+  const one = await wslRow({ '/proc/version': WSL1_KERNEL, '/proc/1/comm': 'init\n' });
+  expect([one.wsl!.status, one.result.ok]).toEqual(['fail', false]);
+  expect(one.wsl!.fix).toContain('wsl --set-version <distro> 2');
+  const warned = await wslRow({ '/proc/version': WSL2_KERNEL, '/proc/1/comm': 'init\n' }, '/mnt/c/code/hos');
+  expect([warned.wsl!.status, warned.result.ok]).toEqual(['warn', true]);
+  expect(warned.wsl!.detail).toContain('/mnt/c/code/hos is on the Windows drive');
+  expect(warned.wsl!.detail).toContain('systemd is off');
+  expect(warned.wsl!.fix).toContain('/etc/wsl.conf');
+  expect(warned.wsl!.fix).toContain('wsl --shutdown');
+  const mntOnly = await wslRow({ '/proc/version': WSL2_KERNEL, '/proc/1/comm': 'systemd\n' }, '/mnt/d/hos');
+  expect([mntOnly.wsl!.status, mntOnly.wsl!.fix]).toEqual(['warn', 'clone hos into your Linux home (for example ~/code/hos), not under /mnt/']);
+});
+
+test('preflight on native Windows fails the OS row and points at WSL2', async () => {
+  const { machine } = fakeMachine({}, { platform: 'win32' });
+  const result = await pre.preflight({ hosRoot: '/nonexistent', claudeBin: '/x/claude', dataDir: '/nonexistent-data' }, machine);
+  const os = result.rows.find((r: { id: string }) => r.id === 'os')!;
+  expect([os.status, os.fix]).toEqual(['fail', 'use WSL2: see INSTALL.md, Windows (WSL2)']);
+  expect(result.ok).toBe(false);
 });
 
 test('preflight strips the same Claude and Anthropic variables as the daemon does', () => {

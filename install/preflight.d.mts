@@ -36,6 +36,7 @@ export interface PreflightMachine {
   run(bin: string, args: string[], options?: { env?: Record<string, string> }): RunResult;
   portFree(port: number): Promise<boolean>;
   freeBytes(dir: string): number | null;
+  readText(path: string): string | null;
 }
 
 export const MIN_NODE_MAJOR: number;
