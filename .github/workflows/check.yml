@@ -28,6 +28,15 @@ jobs:
       - name: tmux and a git with config hooks (the macOS runner has neither)
         if: runner.os == 'macOS'
         run: brew install tmux git && git --version && tmux -V
+      - name: diag (temporary)
+        if: runner.os == 'macOS'
+        run: |
+          which -a git; git --version; echo "TMPDIR=$TMPDIR"; env | grep -i '^GIT' || true
+          git config --system -l --show-origin || true
+          d=$(mktemp -d) && git init -q "$d" && printf '[hook "identity-guard"]\n\tevent = pre-commit\n\tcommand = /usr/bin/true\n' > "$d/gc"
+          (cd "$d" && GIT_CONFIG_GLOBAL="$d/gc" git hook list pre-commit; echo "exit $?")
+          (cd "$d" && GIT_CONFIG_GLOBAL="$d/gc" /usr/bin/git --version; GIT_CONFIG_GLOBAL="$d/gc" /usr/bin/git hook list pre-commit; echo "apple exit $?")
+          (cd "$d" && GIT_CONFIG_GLOBAL="$d/gc" GIT_TRACE=1 git hook list pre-commit 2>&1 | tail -5)
       - run: git config --global user.name ci && git config --global user.email ci@hos.local && git config --global init.defaultBranch main
       - run: npm ci
       - name: Type check
