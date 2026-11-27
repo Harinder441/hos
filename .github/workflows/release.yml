@@ -55,4 +55,3 @@ jobs:
         with:
           name: hos-release-${{ inputs.tag }}
           path: release/
-
