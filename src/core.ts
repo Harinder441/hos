@@ -2534,7 +2534,8 @@ export class Hos {
     const profiles = this.profiles().problems.map(
       ({ file, problem }): StatusItem => ({ id: `profile:${file}`, label: `Profile ${file}`, status: 'warn', detail: problem, fix: `fix the brain's ${file}, then run ${validate}` }),
     );
-    return [...(await this.keeper.doctor(transport)), ...profiles];
+    const blocked = this.brainCommits?.blockedRow();
+    return [...(await this.keeper.doctor(transport)), ...(blocked ? [blocked] : []), ...profiles];
   }
 
   governorStatus(): GovernorStatus {
