@@ -19,11 +19,16 @@ export function PhoneTabs({ state, route, sideOpen, paletteOpen }: { state: Stat
         <Icon id="i-chats" />
         <span>Chats</span>
       </button>
-      {needs > 0 && needsHref && (
+      {needs > 0 && needsHref ? (
         <a href={needsHref} aria-label={`${needs} waiting on you, open the oldest`}>
           <span className="needs-pill">{needs}</span>
           <span>Needs you</span>
         </a>
+      ) : (
+        <span className="tab-idle" title="Nothing is waiting on you">
+          <Icon id="i-wait" />
+          <span>Needs you</span>
+        </span>
       )}
       <button type="button" aria-current={tab === 'more' ? 'page' : undefined} aria-haspopup="dialog" onClick={shell.openPalette}>
         <Icon id="i-more" />

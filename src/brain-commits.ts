@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { appendFile, mkdir, readdir, rename, stat } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { promisify } from 'node:util';
-import type { Chat, EventBody } from './api/types.js';
+import type { Chat, EventBody, StatusItem } from './api/types.js';
 import { commitIdentityRefusal } from './commit-identity.js';
 import { EDIT_TOOL_FIELDS } from './harnesses/tools.js';
 import { localStamp, META_DIR, parseProgress, PROGRESS_FILE, REQUIRED_SECTIONS, sectionOf } from './work.js';
@@ -14,15 +14,15 @@ const oneLine = (error: unknown) => (error instanceof Error ? error.message : St
 const EDIT_FIELDS = EDIT_TOOL_FIELDS;
 const MAX_BYTES = 5 * 1024 * 1024;
 // Copied from the brain's .claude/hooks/auto-commit.sh secret guard.
-const SECRET_PATTERNS = [
-  /AKIA[0-9A-Z]{16}/,
-  /gh[pousr]_[A-Za-z0-9]{36}/,
-  /github_pat_[A-Za-z0-9_]{22,}/,
-  /(^|[^A-Za-z0-9-])sk-(ant-|proj-)?[A-Za-z0-9_-]{20,}/,
-  /xox[baprs]-[A-Za-z0-9-]{10,}/,
-  /-----BEGIN [A-Z ]*PRIVATE KEY/,
-  /(mongodb(\+srv)?|postgres(ql)?|mysql|redis|amqp):\/\/[^/\s:<]+:[^@\s<]+@/,
-  /AGE-SECRET-KEY-1[0-9A-Z]{58}/,
+const SECRET_RULES: Array<[string, RegExp]> = [
+  ['aws-access-key', /AKIA[0-9A-Z]{16}/],
+  ['github-token', /gh[pousr]_[A-Za-z0-9]{36}/],
+  ['github-pat', /github_pat_[A-Za-z0-9_]{22,}/],
+  ['sk-api-key', /(^|[^A-Za-z0-9-])sk-(ant-|proj-)?[A-Za-z0-9_-]{20,}/],
+  ['slack-token', /xox[baprs]-[A-Za-z0-9-]{10,}/],
+  ['private-key', /-----BEGIN [A-Z ]*PRIVATE KEY/],
+  ['age-secret-key', /AGE-SECRET-KEY-1[0-9A-Z]{58}/],
+  ['db-url-password', /(mongodb(\+srv)?|postgres(ql)?|mysql|redis|amqp):\/\/[^/\s:<]+:[^@\s<]+@/],
 ];
 const OLD_PATHS = [/^artifacts\/\d{4}-\d{2}\//, /^artifacts\/handoff\//, /^plans\//, /^status\//];
 const PUSH_EVERY_MS = 60_000;
@@ -51,6 +51,7 @@ export class BrainCommits {
   private readonly touched = new Map<string, Set<string>>();
   private readonly claimed = new Set<string>();
   private readonly skills = new Map<string, string>();
+  private readonly leftOut = new Map<string, { rule: string; since: number }>();
   private queue: Promise<void> = Promise.resolve();
   private pushArmed = false;
   private paused = false;
@@ -216,6 +217,8 @@ export class BrainCommits {
       paths.push(entry.slice(3));
       if (/^[RC]/.test(entry)) paths.push(entries[++i] ?? '');
     }
+    const listed = new Set(paths);
+    for (const path of this.leftOut.keys()) if (!listed.has(path)) this.leftOut.delete(path);
     const unowned = (path: string) => !this.owned(path);
     if (paths.length) await this.commit(paths.filter(unowned), 'hos: sweep', null, true, unowned);
   }
@@ -255,22 +258,59 @@ export class BrainCommits {
     if (addable.length) await this.git('add', '-A', '--', ...addable);
     const staged = (await this.git('diff', '--cached', '--name-only', '-z', '--', ...files)).split('\0').map((p) => p.trim()).filter(Boolean);
     if (!staged.length) return;
-    const diff = await this.git('diff', '--cached', '-U0', '--', ...staged);
-    if (SECRET_PATTERNS.some((pattern) => pattern.test(diff))) {
-      await this.git('reset', '-q', '--', ...staged);
-      await this.log(`ABORT: secret-like content in ${staged.join(', ')} (${chatId ? `chat ${chatId.slice(0, 8)}` : 'sweep'}); nothing committed`);
-      return;
-    }
-    if (guard) staged.push(...(await this.guard(staged, chatId)));
+    const flagged = await this.secrets(staged);
+    if (flagged.size) await this.leaveOut(flagged, chatId);
+    const clean = staged.filter((path) => !flagged.has(path));
+    if (!clean.length) return;
+    if (guard) clean.push(...(await this.guard(clean, chatId)));
     // Re-checked after the awaits: a diagram written since the sweep listed its paths belongs to that diagram's own commit.
-    const kept = staged.filter(keep);
+    const kept = clean.filter(keep);
     if (!kept.length) return;
     const message = `${subject} · ${kept.length} file(s)`;
     await this.git('commit', '-q', '-m', message, '-m', kept.slice(0, 10).join(' '), '--', ...kept);
     const sha = (await this.git('rev-parse', 'HEAD')).trim();
     await this.log(`committed ${sha.slice(0, 12)} ${message}: ${kept.join(', ')}`);
     this.deps.record({ type: 'brain.committed', sha, chatId, files: kept });
+    for (const path of kept) this.leftOut.delete(path);
     this.schedulePush();
+  }
+
+  blockedRow(): StatusItem | null {
+    if (!this.leftOut.size) return null;
+    const since = Math.min(...[...this.leftOut.values()].map((entry) => entry.since));
+    const files = [...this.leftOut].map(([path, { rule }]) => `${path} (${rule})`).join(', ');
+    return { id: 'brain_commits', label: 'Brain commits', status: 'warn', detail: `blocked since ${localStamp(since)}: ${files}`, fix: 'redact or delete the file; it commits on the next sweep' };
+  }
+
+  private async secrets(staged: string[]): Promise<Map<string, string>> {
+    const flagged = new Map<string, string>();
+    const ruleFor = (diff: string) => {
+      const added = diff
+        .split('\n')
+        .filter((line) => line.startsWith('+') && !line.startsWith('+++ '))
+        .join('\n');
+      return SECRET_RULES.find(([, pattern]) => pattern.test(added))?.[0];
+    };
+    if (!ruleFor(await this.git('diff', '--cached', '-U0', '--', ...staged))) return flagged;
+    for (const path of staged) {
+      const rule = ruleFor(await this.git('diff', '--cached', '-U0', '--', path));
+      if (rule) flagged.set(path, rule);
+    }
+    return flagged;
+  }
+
+  private async leaveOut(flagged: Map<string, string>, chatId: string | null): Promise<void> {
+    await this.git('reset', '-q', '--', ...flagged.keys());
+    for (const [path, rule] of flagged) {
+      await this.log(`left out ${path}: secret-like content (${rule}) (${chatId ? `chat ${chatId.slice(0, 8)}` : 'sweep'}); the other files commit`);
+      if (chatId) this.deps.warn(chatId, `left out ${path}: it holds secret-like content (${rule}). Redact it and it commits on the next sweep; your other files committed.`);
+      if (this.leftOut.has(path)) continue;
+      this.leftOut.set(path, { rule, since: this.deps.now() });
+      this.deps.alert(
+        'Brain file left out of commits',
+        `${path} in ${this.deps.brainDir} on ${this.deps.host} holds secret-like content (${rule}), so hos leaves it out of every brain commit; the rest of the brain still commits and pushes. Redact or delete it and it commits on the next sweep.`,
+      );
+    }
   }
 
   private schedulePush(): void {

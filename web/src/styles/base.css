@@ -641,7 +641,8 @@ kbd {
   }
 
   .bottom-tabs > a,
-  .bottom-tabs > button {
+  .bottom-tabs > button,
+  .bottom-tabs > .tab-idle {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -655,6 +656,10 @@ kbd {
     color: var(--muted);
     text-decoration: none;
     position: relative;
+  }
+
+  .bottom-tabs > .tab-idle {
+    opacity: 0.45;
   }
 
   .bottom-tabs svg {
