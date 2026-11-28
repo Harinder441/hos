@@ -3,7 +3,9 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import type { MachineReading, MachineSetup, SubscriptionLogin } from '../api/types.js';
+import type { PresenceReading } from '../plugins/types.js';
 import { bundledClaude, claudeEnv } from './claude-bin.js';
+import { MacPresence } from './mac-presence.js';
 
 export type MachineSample = MachineReading;
 export type { MachineSetup };
@@ -14,6 +16,7 @@ export interface Machine {
   bootedAt(): Promise<number | null>;
   keepAwake(): () => void;
   setup(): Promise<MachineSetup>;
+  presence?(): Promise<PresenceReading>;
 }
 
 export const steadyMachine: Machine = {
@@ -68,10 +71,17 @@ const CHARGING_POLICIES =
 export interface MacMachineOptions {
   claudeBin?: string;
   launchAgentPlist: string;
+  presenceDir: string;
 }
 
 export class MacMachine implements Machine {
+  private presenceReader: MacPresence | null = null;
+
   constructor(private readonly options: MacMachineOptions) {}
+
+  presence(): Promise<PresenceReading> {
+    return (this.presenceReader ??= new MacPresence(this.options.presenceDir)).read();
+  }
 
   async sample(): Promise<MachineSample> {
     const [level, therm, batt] = await Promise.all([

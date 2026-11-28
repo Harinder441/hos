@@ -18,6 +18,7 @@ import { loadSources, snagSpace, type PluginReport } from './plugins/loader.js';
 import { snagFiles } from './snags/files.js';
 import { localPlugin } from './plugins/local.js';
 import { NotifierLoop } from './plugins/notify.js';
+import { PresenceSampler } from './plugins/presence.js';
 import type { SourcesInfo, StatusItem } from './api/types.js';
 import { CodeView, defaultCodeViewBin } from './code-view.js';
 import { codeViewLoginToken, codeViewToken, tokenFile } from './code-view-bridge.js';
@@ -34,7 +35,7 @@ import { loadGovernorLimits, loadSpawnLimits } from './governor.js';
 import { steadyMachine, type Machine, type MachineSetup } from './adapters/machine.js';
 import { Passkeys } from './passkeys.js';
 import { API_VERSION, computerName, Computers, hosVersion, type PeerConfig } from './computers.js';
-import { FALLBACK_POLICY, loadComposer, loadCrossChatShare, loadDeskOrigins, loadMcpServers, loadModels, loadOwnerSettings, loadPluginEntries, loadPolicy, type McpServerConfig } from './policy.js';
+import { FALLBACK_POLICY, loadComposer, loadCrossChatShare, loadDeskOrigins, loadDeskPresence, loadMcpServers, loadModels, loadOwnerSettings, loadPluginEntries, loadPolicy, type McpServerConfig } from './policy.js';
 import { ownerInfo, setOwnerSettings } from './owner.js';
 import { Push } from './push.js';
 import { listSkills } from './skills.js';
@@ -247,7 +248,16 @@ export async function startDaemon(config: DaemonConfig, adapters: Adapters): Pro
   snagsReady = snags;
   const { token: bridgeToken, file: bridgeTokenFile } = codeViewToken(config.dataDir);
   const desk = () => deskScreen(hos, store, snags, adapters.clock.now());
-  const notifiers = new NotifierLoop(sources.notifiers, adapters.clock, desk);
+  let presenceOn = false;
+  try {
+    presenceOn = loadDeskPresence(file);
+  } catch (error) {
+    console.error(`${(error as Error).message}; the desk push carries no presence`);
+  }
+  const readPresence = sensors.machine.presence?.bind(sensors.machine);
+  if (presenceOn && !readPresence) console.error('desk.presence is on, but this computer has no presence sampler (macOS only); the desk push carries no presence');
+  const presence = presenceOn && readPresence ? new PresenceSampler(hostname().split('.')[0]!.toLowerCase(), readPresence, adapters.clock) : undefined;
+  const notifiers = new NotifierLoop(sources.notifiers, adapters.clock, desk, undefined, presence);
   let deskOrigins: string[] = [];
   try {
     deskOrigins = loadDeskOrigins(file);

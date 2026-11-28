@@ -63,11 +63,24 @@ export interface DeskChat {
   since: string | null;
 }
 
+export interface PresenceReading {
+  idle_s: number | null;
+  locked: boolean | null;
+  display_asleep: boolean | null;
+  camera: boolean | null;
+  mic: boolean | null;
+}
+
+export interface PresenceSample extends PresenceReading {
+  t: string;
+}
+
 export interface DeskScreen {
   generated_at: string;
   waiting: Array<DeskChat & { ask: string }>;
   running: DeskChat[];
   open_snags: number;
+  presence?: { host: string; samples: PresenceSample[] };
 }
 
 interface SourceBase<K extends string> {

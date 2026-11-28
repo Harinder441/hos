@@ -297,6 +297,14 @@ export function loadDeskOrigins(file: string | undefined): string[] {
   return origins as string[];
 }
 
+export function loadDeskPresence(file: string | undefined): boolean {
+  if (!file || !existsSync(file)) return false;
+  const presence = (parse(readFileSync(file, 'utf8')) as { desk?: { presence?: unknown } } | null)?.desk?.presence;
+  if (presence === undefined) return false;
+  if (typeof presence !== 'boolean') throw new Error(`${file}: desk.presence must be true or false`);
+  return presence;
+}
+
 const TRANSPORTS = ['tailscale', 'cloudflare'] as const;
 
 export function loadTransportName(file: string): (typeof TRANSPORTS)[number] | 'loopback' {

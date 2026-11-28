@@ -1,4 +1,5 @@
 import type { Machine, MachineSample, MachineSetup } from '../adapters/machine.js';
+import type { PresenceReading } from '../plugins/types.js';
 
 export class FakeMachine implements Machine {
   current: MachineSample = { memory: 'normal', thermalWarning: false, battery: { percent: 100, onBattery: false } };
@@ -9,6 +10,12 @@ export class FakeMachine implements Machine {
     claude: { loggedIn: true, plan: 'team' },
     launchAgent: true,
     browser: true,
+  };
+
+  reading: PresenceReading | Error = { idle_s: 3, locked: false, display_asleep: false, camera: false, mic: false };
+  presence?: () => Promise<PresenceReading> = async () => {
+    if (this.reading instanceof Error) throw this.reading;
+    return this.reading;
   };
 
   async sample(): Promise<MachineSample> {

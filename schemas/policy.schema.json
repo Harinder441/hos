@@ -232,6 +232,10 @@
           "type": "array",
           "description": "browser origins allowed to read GET /api/desk",
           "items": { "type": "string", "pattern": "^https?://[^/\\s]+$" }
+        },
+        "presence": {
+          "type": "boolean",
+          "description": "macOS only: sample idle time, screen lock, display sleep, camera and mic in use every 15 s and send them with the desk push to notifiers (default false; read at start)"
         }
       }
     },

@@ -84,7 +84,10 @@ The full recipe is `skills/hos/recipes/add-a-data-source.md` in your brain (size
      blocks with `HH:MM` start and end) and `link` (an http(s) URL).
    - `snags`: `status()` (not async), `list`, `get`, `find`, `add`, `change`, `comment`, `localFile`. Keep files
      through `host.snagFiles`.
-   - `notifier`: `push(screen)`; optional `everyMs` (default 60 s). Several notifiers may run.
+   - `notifier`: `push(screen)`; optional `everyMs` (default 60 s). Several notifiers may run. On macOS with
+     `desk: { presence: true }` in the policy, `screen.presence` is `{ host, samples: [{ t, idle_s, locked,
+     display_asleep, camera, mic }] }`: the 15 s samples this notifier hasn't received yet, at most 40 a push, oldest
+     first. A failed push keeps them for the next one (the newest 240). A value hos couldn't read is `null`.
 3. Follow the host rules:
    - Call `host.provide()` only inside `register()`. Import and `register()` each get 10 s; do slow work inside the
      methods.

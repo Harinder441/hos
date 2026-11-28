@@ -178,7 +178,7 @@ async function boot(brain: string | null, setup?: SetupOptions): Promise<Daemon>
           ? steadyMachine
           : process.platform === 'linux'
             ? new LinuxMachine(values['claude-bin'] ? { claudeBin: values['claude-bin'] } : {})
-            : new MacMachine({ launchAgentPlist: launchAgentPlist(undefined, values['launchd-label']), ...(values['claude-bin'] ? { claudeBin: values['claude-bin'] } : {}) }),
+            : new MacMachine({ launchAgentPlist: launchAgentPlist(undefined, values['launchd-label']), presenceDir: join(values['data-dir'], 'presence'), ...(values['claude-bin'] ? { claudeBin: values['claude-bin'] } : {}) }),
     },
   );
   const doctor = await transport.doctor(daemon.port);
