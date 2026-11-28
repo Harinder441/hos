@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security problem
+    url: https://github.com/Harinder441/hos/security/policy
+    about: Please report it privately through the security policy, not in a public issue.

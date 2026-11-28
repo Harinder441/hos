@@ -1,0 +1,41 @@
+name: Bug in hos
+description: Something in hos does not work as the docs say.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: hos version
+      description: The output of `hos --version`.
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      description: For example macOS 15, Ubuntu 24.04, or Windows 11 with WSL2.
+    validations:
+      required: true
+  - type: dropdown
+    id: reach
+    attributes:
+      label: How you reached hos
+      options:
+        - On the same computer (loopback)
+        - Tailscale
+        - Cloudflare Tunnel
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Anything relevant from the terminal or the browser console. Remove tokens and paths you would rather keep private.
+      render: text
